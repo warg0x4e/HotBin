@@ -2,8 +2,9 @@
 
 class SHQUERYRBINFO extends Buffer
 {
-    ;// https://tinyurl.com/shellapi-shqueryrbinfo
+    ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-shqueryrbinfo
     
+    cbSize => NumGet(this, "UInt")
     i64Size => NumGet(this, A_PtrSize, "Int64")
     i64NumItems => NumGet(this, A_PtrSize + 8, "Int64")
     

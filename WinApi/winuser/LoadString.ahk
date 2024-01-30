@@ -2,15 +2,16 @@
 
 LoadString(hInstance, uID)
 {
-    ;// https://tinyurl.com/winuser-loadstringw
+    ;// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-loadstringw
     
     if int := DllCall("user32\LoadStringW"
                      ,"Ptr", hInstance
                      ,"UInt", uID
-                     ,"PtrP", &(lpBuf := 0)
+                     ,"PtrP", &(lpBuffer := 0)
                      ,"Int", 0
                      ,"Int")
-        return StrGet(lpBuf, int)
+        
+        return StrGet(lpBuffer, int)
         
     throw Error(int, A_ThisFunc, A_LastError)
 }

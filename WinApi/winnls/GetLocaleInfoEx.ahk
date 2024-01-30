@@ -1,16 +1,19 @@
 #Requires AutoHotkey v2.0+
 
-GetLocaleInfoEx(lpLocaleName, dwLCType, lpLCData)
+GetLocaleInfoEx(lpLocaleName, LCType)
 {
-    ;// https://tinyurl.com/winnls-getlocaleinfoex
+    ;// https://learn.microsoft.com/en-us/windows/win32/api/winnls/nf-winnls-getlocaleinfoex
     
     if int := DllCall("kernel32\GetLocaleInfoEx"
                      ,lpLocaleName is Integer ? "Ptr" : "WStr", lpLocaleName
-                     ,"UInt", dwLCType
-                     ,"Ptr", lpLCData
-                     ,"Int", lpLCData = 0 ? 0 : lpLCData.Size >> 1
+                     ,"UInt", LCType
+                     ,"Ptr", lpLCData := Buffer(520)
+                     ,"Int", 260
                      ,"Int")
-        return int
+        
+        return LCType & 0x20000000
+               ? NumGet(lpLCData, "UInt")
+               : StrGet(lpLCData, int)
         
     throw Error(int, A_ThisFunc, A_LastError)
 }

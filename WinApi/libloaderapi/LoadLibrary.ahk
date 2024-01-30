@@ -2,11 +2,12 @@
 
 LoadLibrary(lpLibFileName)
 {
-    ;// https://tinyurl.com/libloaderapi-loadlibraryw
+    ;// https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
     
     if HMODULE := DllCall("kernel32\LoadLibraryW"
                          ,lpLibFileName is Integer ? "Ptr" : "WStr", lpLibFileName
                          ,"Ptr")
+        
         return HMODULE
         
     throw Error(HMODULE, A_ThisFunc, A_LastError)
