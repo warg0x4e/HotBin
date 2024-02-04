@@ -301,7 +301,7 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
                          ,"UInt", 0
                          ,"Int")
         
-        throw OSError(HRESULT, A_ThisFunc, HRESULT)
+        throw OSError(HRESULT, A_ThisFunc)
         
     return HRESULT
 }
