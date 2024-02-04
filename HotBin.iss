@@ -1,3 +1,5 @@
+#define AppVersion "2.7.1.4"
+
 [Setup]
 AppComments=Easily access the Recycle Bin from the System Tray.
 AppContact=https://github.com/warg0x4e/HotBin/issues
@@ -8,7 +10,7 @@ AppPublisher=warg0x4e
 AppPublisherURL=https://github.com/warg0x4e/HotBin
 AppSupportURL=https://github.com/warg0x4e/HotBin/issues
 AppUpdatesURL=https://github.com/warg0x4e/HotBin/releases
-AppVersion=2.7.1.2
+AppVersion={#AppVersion}
 ArchitecturesInstallIn64BitMode=x64
 DefaultDirName={autopf}\HotBin
 DefaultGroupName=HotBin
@@ -21,14 +23,14 @@ UninstallDisplayName=HotBin
 AppCopyright=The Unlicense
 SetupIconFile=HotBin.ico
 WizardStyle=modern
-OutputBaseFilename=HotBin-2.7.1.2-setup
+OutputBaseFilename=HotBin-{#AppVersion}-setup
 OutputDir=.
 SourceDir=.
-VersionInfoVersion=2.7.1.2
+VersionInfoVersion={#AppVersion}
 
 [Files]
-Source: "HotBin-2.7.1.2-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
-Source: "HotBin-2.7.1.2-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
+Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
+Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
