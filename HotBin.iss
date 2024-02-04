@@ -8,7 +8,7 @@ AppPublisher=warg0x4e
 AppPublisherURL=https://github.com/warg0x4e/HotBin
 AppSupportURL=https://github.com/warg0x4e/HotBin/issues
 AppUpdatesURL=https://github.com/warg0x4e/HotBin/releases
-AppVersion=2.7.0.0
+AppVersion=2.7.1.0
 ArchitecturesInstallIn64BitMode=x64
 DefaultDirName={autopf}\HotBin
 DefaultGroupName=HotBin
@@ -21,14 +21,14 @@ UninstallDisplayName=HotBin
 AppCopyright=The Unlicense
 SetupIconFile=HotBin.ico
 WizardStyle=modern
-OutputBaseFilename=HotBin-2.7.0.0-setup
+OutputBaseFilename=HotBin-2.7.1.0-setup
 OutputDir=.
 SourceDir=.
-VersionInfoVersion=2.7.0.0
+VersionInfoVersion=2.7.1.0
 
 [Files]
-Source: "HotBin-2.7.0.0-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
-Source: "HotBin-2.7.0.0-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
+Source: "HotBin-2.7.1.0-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
+Source: "HotBin-2.7.1.0-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -39,4 +39,4 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 
 [Run]
 Filename: "{app}\HotBin.exe"; Description: "Run HotBin"; Flags: nowait postinstall skipifsilent
-Filename: "{app}\HotBin.exe"; Parameters: "/runatstartup"; Description: "Run HotBin at startup"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\HotBin.exe"; Parameters: "/RunAtStartup"; Description: "Run HotBin at startup"; Flags: nowait postinstall skipifsilent

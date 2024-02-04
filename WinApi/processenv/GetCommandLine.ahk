@@ -4,6 +4,5 @@ GetCommandLine()
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-getcommandlinew
     
-    return DllCall("kernel32\GetCommandLineW"
-                  ,"WStr")
+    return DllCall("kernel32\GetCommandLineW", "WStr")
 }

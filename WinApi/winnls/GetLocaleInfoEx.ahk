@@ -4,16 +4,23 @@ GetLocaleInfoEx(lpLocaleName, LCType)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/winnls/nf-winnls-getlocaleinfoex
     
-    if int := DllCall("kernel32\GetLocaleInfoEx"
-                     ,lpLocaleName is Integer ? "Ptr" : "WStr", lpLocaleName
-                     ,"UInt", LCType
-                     ,"Ptr", lpLCData := Buffer(520)
-                     ,"Int", 260
-                     ,"Int")
+    if !cchData := DllCall("kernel32\GetLocaleInfoEx"
+                          ,lpLocaleName is Integer ? "Ptr" : "WStr", lpLocaleName
+                          ,"UInt", LCType
+                          ,"Ptr", 0
+                          ,"Int", 0
+                          ,"Int")
         
-        return LCType & 0x20000000
-               ? NumGet(lpLCData, "UInt")
-               : StrGet(lpLCData, int)
+        throw OSError(A_LastError, A_ThisFunc, cchData)
+    
+    if !cchData := DllCall("kernel32\GetLocaleInfoEx"
+                          ,lpLocaleName is Integer ? "Ptr" : "WStr", lpLocaleName
+                          ,"UInt", LCType
+                          ,"Ptr", lpLCData := Buffer(cchData << 1)
+                          ,"Int", cchData
+                          ,"Int")
         
-    throw Error(int, A_ThisFunc, A_LastError)
+        throw OSError(A_LastError, A_ThisFunc, cchData)
+    
+    return LCType & 0x20000000 ? NumGet(lpLCData, "UInt") : StrGet(lpLCData)
 }

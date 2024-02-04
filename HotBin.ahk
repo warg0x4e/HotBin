@@ -3,8 +3,8 @@
 ;@Ahk2Exe-SetDescription HotBin
 ;@Ahk2Exe-SetName HotBin
 ;@Ahk2Exe-SetOrigFilename HotBin.exe
-;@Ahk2Exe-SetVersion 2.7.0.0
-;@Ahk2Exe-UpdateManifest 0, HotBin, 2.7.0.0, 0
+;@Ahk2Exe-SetVersion 2.7.1.0
+;@Ahk2Exe-UpdateManifest 0, HotBin, 2.7.1.0, 0
 
 #Requires AutoHotkey v2.0+
 
@@ -25,38 +25,42 @@ global NONE := ""
 Main()
 Main()
 {
-    ProcessSetPriority "Low"
-    SetWorkingDir A_ScriptDir
-
-    RunAsUser()
+    RunAsInteractiveUser()
     
     ;// HotBin.iss
-    for _, szArg in A_Args
-        if szArg = "/runatstartup"
+    Loop A_Args.Length
+    {
+        if A_Args.Pop() = "/RunAtStartup"
+        {
             RunAtStartup.Enable()
-            
-    szAppId := "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}"
+            ExitApp
+        }
+    }
     
     ;// https://jrsoftware.org/ishelp/index.php?topic=setup_appmutex
-    try CreateMutex(NULL, false, szAppId)
+    try CreateMutex(NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}")
     
-    if A_LastError
-        ExitApp A_LastError
-        
+    if dwError := A_LastError
+        ExitApp dwError
+    
     MUI.Load()
+    
     CreateMenu()
     
     ;// Free memory.
-    MUI.DeleteProp("szClose")
-    MUI.DeleteProp("szOpen")
+    MUI.DeleteProp "bRTL"
+    MUI.DeleteProp "szClose"
+    MUI.DeleteProp "szOpen"
     
     shqrbi := SHQUERYRBINFO()
     
     UpdateIcon(shqrbi)
     SetTimer UpdateIcon.Bind(shqrbi), 500
     
+    ;// https://learn.microsoft.com/en-us/windows/win32/menurc/wm-initmenupopup
     OnMessage WM_INITMENUPOPUP := 0x117, UpdateMenu.Bind(shqrbi)
     
+    ProcessSetPriority "Low"
     A_IconHidden := false
 }
 
@@ -72,17 +76,19 @@ class MUI
     
     static Load()
     {
+        ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-name-constants
         LOCALE_NAME_USER_DEFAULT := NULL
         
+        ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-ireadinglayout
         LOCALE_IREADINGLAYOUT := 0x70
+        
+        ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-return-constants
         LOCALE_RETURN_NUMBER := 0x20000000
         
         LCType := LOCALE_IREADINGLAYOUT | LOCALE_RETURN_NUMBER
         
         try
         {
-            bRTL := GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LCType) = 1
-            
             hMMRes := LoadLibrary("mmres")
             hShell32 := LoadLibrary("shell32")
             
@@ -93,19 +99,21 @@ class MUI
             szOpen := LoadString(hShell32, 12850)
             szStartup := LoadString(hShell32, 21787)
             
-            FreeLibrary(hMMRes)
-            FreeLibrary(hShell32)
+            try FreeLibrary(hMMRes)
+            try FreeLibrary(hShell32)
+            
+            bRTL := GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LCType) = 1
         }
         catch
             return
-            
-        MUI.bRTL := bRTL
-        MUI.szClose := szClose
-        MUI.szEmptyRecycleBin := szEmptyRecycleBin
-        MUI.szItem := szItem
-        MUI.szItems := szItems
-        MUI.szOpen := szOpen
-        MUI.szStartup := szStartup
+        
+        this.bRTL := bRTL
+        this.szClose := szClose
+        this.szEmptyRecycleBin := szEmptyRecycleBin
+        this.szItem := szItem
+        this.szItems := szItems
+        this.szOpen := szOpen
+        this.szStartup := szStartup
     }
 }
 
@@ -118,10 +126,7 @@ class RunAtStartup
         try RegDelete szRegKeyName, "HotBin"
     }
     
-    static Disabled()
-    {
-        return !this.Enabled()
-    }
+    static Disabled() => !this.Enabled()
     
     static Enable()
     {
@@ -150,14 +155,10 @@ class RunAtStartup
 
 CreateMenu()
 {
-    WS_EX_LAYOUTRTL := 0x400000
-    
-    WinSetExStyle MUI.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL, A_ScriptHwnd
-    
     A_TrayMenu.Delete
     
-    A_TrayMenu.Add "1", (*) => false
-    A_TrayMenu.Add "2", (*) => false
+    A_TrayMenu.Add "1", (*) => NULL
+    A_TrayMenu.Add "2", (*) => NULL
     A_TrayMenu.Add
     A_TrayMenu.Add MUI.szStartup, (*) => RunAtStartup.Toggle()
     A_TrayMenu.Add
@@ -169,6 +170,11 @@ CreateMenu()
     
     A_TrayMenu.ClickCount := 1
     A_TrayMenu.Default := MUI.szOpen
+    
+    ;// https://learn.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
+    WS_EX_LAYOUTRTL := 0x400000
+    
+    WinSetExStyle MUI.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL, A_ScriptHwnd
 }
 
 EmptyRecycleBin()
@@ -181,29 +187,36 @@ OpenRecycleBin()
     try Run "shell:RecycleBinFolder"
 }
 
-RunAsUser()
+RunAsInteractiveUser()
 {
     if A_IsAdmin
     {
         try WdcRunTaskAsInteractiveUser(GetCommandLine(), NULL)
         
+        ;// https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
         ExitApp ERROR_ACCESS_DENIED := 0x5
     }
 }
 
 UpdateIcon(shqrbi)
 {
-    static i64Size := -1
-          ,i64NumItems := -1
+    static i64PrevSize := -1
+          ,i64PrevNumItems := -1
     
-    try SHQueryRecycleBin(NULL, shqrbi)
-    
-    if shqrbi.i64Size = i64Size && shqrbi.i64NumItems = i64NumItems
-        ;// No change.
+    try
+        SHQueryRecycleBin(NULL, shqrbi)
+    catch
         return
-        
+    
     i64Size := shqrbi.i64Size
     i64NumItems := shqrbi.i64NumItems
+    
+    if i64Size = i64PrevSize && i64NumItems = i64PrevNumItems
+        ;// No change.
+        return
+    
+    i64PrevSize := i64Size
+    i64PrevNumItems := i64NumItems
     
     szSize := StrFormatByteSize(i64Size)
     szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
@@ -213,16 +226,34 @@ UpdateIcon(shqrbi)
     A_IconTip := szNumItems "`n" szSize
     
     TraySetIcon "shell32", i64NumItems
-                           ? -SHSTOCKICONID.SIID_RECYCLERFULL
-                           : -SHSTOCKICONID.SIID_RECYCLER
+                           ? SHSTOCKICONID.SIID_RECYCLERFULL := 33
+                           : SHSTOCKICONID.SIID_RECYCLER := 32
 }
 
 UpdateMenu(shqrbi, *)
-{ 
-    try SHQueryRecycleBin(NULL, shqrbi)
-        
+{
+    static i64PrevSize := -1
+          ,i64PrevNumItems := -1
+    
+    if RunAtStartup.Enabled()
+        A_TrayMenu.Check MUI.szStartup
+    else
+        A_TrayMenu.Uncheck MUI.szStartup
+    
+    try
+        SHQueryRecycleBin(NULL, shqrbi)
+    catch
+        return
+    
     i64Size := shqrbi.i64Size
     i64NumItems := shqrbi.i64NumItems
+    
+    if i64Size = i64PrevSize && i64NumItems = i64PrevNumItems
+        ;// No change.
+        return
+    
+    i64PrevSize := i64Size
+    i64PrevNumItems := i64NumItems
     
     szSize := StrFormatByteSize(i64Size)
     szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
@@ -232,24 +263,19 @@ UpdateMenu(shqrbi, *)
     A_TrayMenu.Rename "1&", szNumItems
     A_TrayMenu.Rename "2&", szSize
     
-    if RunAtStartup.Enabled()
-        A_TrayMenu.Check MUI.szStartup
-    else
-        A_TrayMenu.Uncheck MUI.szStartup
-    
     if i64NumItems
     {
-        A_TrayMenu.Enable  MUI.szEmptyRecycleBin
+        A_TrayMenu.Enable MUI.szEmptyRecycleBin
         A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
                           ,"shell32"
-                          ,-SHSTOCKICONID.SIID_RECYCLERFULL
+                          ,SHSTOCKICONID.SIID_RECYCLERFULL
     }
     else
     {
         A_TrayMenu.Disable MUI.szEmptyRecycleBin
         A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
                           ,"shell32"
-                          ,-SHSTOCKICONID.SIID_RECYCLER
+                          ,SHSTOCKICONID.SIID_RECYCLER
     }
 }
 
@@ -275,7 +301,7 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
                          ,"UInt", 0
                          ,"Int")
         
-        throw Error(HRESULT, A_ThisFunc, A_LastError)
+        throw OSError(HRESULT, A_ThisFunc, HRESULT)
         
     return HRESULT
 }

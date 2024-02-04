@@ -9,6 +9,6 @@ LoadLibrary(lpLibFileName)
                          ,"Ptr")
         
         return HMODULE
-        
-    throw Error(HMODULE, A_ThisFunc, A_LastError)
+    
+    throw OSError(A_LastError, A_ThisFunc, HMODULE)
 }

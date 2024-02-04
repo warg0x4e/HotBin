@@ -11,6 +11,6 @@ CreateMutex(lpMutexAttributes, bInitialOwner, lpName)
                         ,"Ptr")
         
         return HANDLE
-        
-    throw Error(HANDLE, A_ThisFunc, A_LastError)
+    
+    throw OSError(A_LastError, A_ThisFunc, HANDLE)
 }
