@@ -226,8 +226,8 @@ UpdateIcon(shqrbi)
     A_IconTip := szNumItems "`n" szSize
     
     TraySetIcon "shell32", i64NumItems
-                           ? SHSTOCKICONID.SIID_RECYCLERFULL := 33
-                           : SHSTOCKICONID.SIID_RECYCLER := 32
+                           ? SHSTOCKICONID.SIID_RECYCLERFULL
+                           : SHSTOCKICONID.SIID_RECYCLER
 }
 
 UpdateMenu(shqrbi, *)
