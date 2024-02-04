@@ -3,8 +3,8 @@
 ;@Ahk2Exe-SetDescription HotBin
 ;@Ahk2Exe-SetName HotBin
 ;@Ahk2Exe-SetOrigFilename HotBin.exe
-;@Ahk2Exe-SetVersion 2.7.1.0
-;@Ahk2Exe-UpdateManifest 0, HotBin, 2.7.1.0, 0
+;@Ahk2Exe-SetVersion 2.7.1.1
+;@Ahk2Exe-UpdateManifest 0, HotBin, 2.7.1.1, 0
 
 #Requires AutoHotkey v2.0+
 
