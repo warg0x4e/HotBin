@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.7.1.4
+;@Ahk2Exe-Let AppVersion = 2.7.1.5
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -295,11 +295,15 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 {
     ;// Not documented?
     
-    return DllCall("wdc\WdcRunTaskAsInteractiveUser"
-                  ,pwszCmdLine is Integer ? "Ptr" : "WStr", pwszCmdLine
-                  ,pwszPath is Integer ? "Ptr" : "WStr", pwszPath
-                  ,"UInt", 0
-                  ,"HRESULT")
+    if HRESULT := DllCall("wdc\WdcRunTaskAsInteractiveUser"
+                         ,pwszCmdLine is Integer ? "Ptr" : "WStr", pwszCmdLine
+                         ,pwszPath is Integer ? "Ptr" : "WStr", pwszPath
+                         ,"UInt", 0
+                         ,"Int")
+        
+        throw OSError(HRESULT, A_ThisFunc)
+    
+    return HRESULT
 }
 
 #Include WinApi\libloaderapi\FreeLibrary.ahk

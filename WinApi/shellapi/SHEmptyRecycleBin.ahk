@@ -4,9 +4,13 @@ SHEmptyRecycleBin(hWnd, pszRootPath, dwFlags)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shemptyrecyclebinw
     
-    return DllCall("shell32\SHEmptyRecycleBinW"
-                  ,"Ptr", hWnd
-                  ,pszRootPath is Integer ? "Ptr" : "WStr", pszRootPath
-                  ,"UInt", dwFlags
-                  ,"HRESULT")
+    if HRESULT := DllCall("shell32\SHEmptyRecycleBinW"
+                         ,"Ptr", hWnd
+                         ,pszRootPath is Integer ? "Ptr" : "WStr", pszRootPath
+                         ,"UInt", dwFlags
+                         ,"Int")
+        
+        throw OSError(HRESULT, A_ThisFunc)
+    
+    return HRESULT
 }
