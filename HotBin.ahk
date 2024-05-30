@@ -129,9 +129,6 @@ class MUI
 
 class RunAtStartup
 {
-    
-    static Disabled() => !this.Enabled()
-    
     static Enable()
     {
         try
@@ -174,6 +171,8 @@ class RunAtStartup
                      ,"RunAtStartup"
         }
     }
+    
+    static Disabled() => !this.Enabled()
     
     static Toggle()
     {
