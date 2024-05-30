@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.7.1.5
+;@Ahk2Exe-Let AppVersion = 2.7.15.0
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
