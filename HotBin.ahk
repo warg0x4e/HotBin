@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.7.16.0
+;@Ahk2Exe-Let AppVersion = 2.7.16.1
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -93,11 +93,8 @@ class MUI
         
         try
         {
-            try
-            {
-                hMMRes := LoadLibrary("mmres")
-                hShell32 := LoadLibrary("shell32")
-            }
+            hMMRes := LoadLibrary("mmres")
+            hShell32 := LoadLibrary("shell32")
             
             szClose := LoadString(hShell32, 12851)
             szEmptyRecycleBin := LoadString(hMMRes, 5831)
@@ -113,11 +110,10 @@ class MUI
             return
         finally
         {
-            try
-            {
-                FreeLibrary(hMMRes)
-                FreeLibrary(hShell32)
-            }
+            if IsSet(hMMRes)
+                try FreeLibrary(hMMRes)
+            if IsSet(hShell32)
+                try FreeLibrary(hShell32)
         }
         
         this.bRTL := bRTL

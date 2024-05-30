@@ -1,4 +1,4 @@
-#define AppVersion "2.7.16.0"
+#define AppVersion "2.7.16.1"
 
 [Setup]
 AppComments=Easily access the Recycle Bin from the System Tray.
