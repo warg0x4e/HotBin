@@ -22,15 +22,18 @@ InstallMouseHook false
 global NONE := ""
       ,NULL := 0
 
+global IMAGERES_RECYCLER := 51
+      ,IMAGERES_RECYCLER_ERROR := 246
+      ,IMAGERES_RECYCLER_FULL := 50
+
 Main()
 Main()
 {
-    ;// HotBin.iss
-    Loop A_Args.Length
+    RunAsInteractiveUser()
+    
+    try
         if A_Args.Pop() = "/RunAtStartup"
             RunAtStartup.Enable()
-            
-    RunAsInteractiveUser()
     
     ;// https://jrsoftware.org/ishelp/index.php?topic=setup_appmutex
     try CreateMutex(NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}")
@@ -39,7 +42,6 @@ Main()
         ExitApp dwError
     
     MUI.Load()
-    
     CreateMenu()
     
     ;// Free memory.
@@ -64,6 +66,7 @@ class MUI
     static bRTL := false
           ,szClose := "Close"
           ,szEmptyRecycleBin := "Empty Recycle Bin"
+          ,szError := "Error"
           ,szItem := "%s item"
           ,szItems := "%s items"
           ,szOpen := "Open"
@@ -89,6 +92,7 @@ class MUI
             
             szClose := LoadString(hShell32, 12851)
             szEmptyRecycleBin := LoadString(hMMRes, 5831)
+            szError := LoadString(hShell32, 51248)
             szItem := LoadString(hShell32, 38193)
             szItems := LoadString(hShell32, 38192)
             szOpen := LoadString(hShell32, 12850)
@@ -105,6 +109,7 @@ class MUI
         this.bRTL := bRTL
         this.szClose := szClose
         this.szEmptyRecycleBin := szEmptyRecycleBin
+        this.szError := szError
         this.szItem := szItem
         this.szItems := szItems
         this.szOpen := szOpen
@@ -114,29 +119,48 @@ class MUI
 
 class RunAtStartup
 {
-    static Disable()
-    {
-        szRegKeyName := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-        
-        try RegDelete szRegKeyName, "HotBin"
-    }
     
     static Disabled() => !this.Enabled()
     
     static Enable()
     {
-        szRegKeyName := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-        
-        try RegWrite A_ScriptFullPath, "REG_SZ", szRegKeyName, "HotBin"
+        try
+        {
+            RegWrite "1"
+                    ,"REG_SZ"
+                    ,"HKCU\SOFTWARE\HotBin"
+                    ,"RunAtStartup"
+            
+            RegWrite '"' A_ScriptFullPath '"'
+                    ,"REG_SZ"
+                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                    ,"HotBin"
+        }
     }
     
     static Enabled()
     {
-        szRegKeyName := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+        bEnabled := RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0)
         
-        szRegRead := RegRead(szRegKeyName, "HotBin", NONE)
+        ;// Ensure.
+        if bEnabled
+            this.Enable()
+        else
+            this.Disable()
         
-        return szRegRead = A_ScriptFullPath
+        return bEnabled
+    }
+    
+    static Disable()
+    {
+        try
+        {
+            RegDelete "HKCU\SOFTWARE\HotBin"
+                     ,"RunAtStartup"
+            
+            RegDelete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                     ,"HotBin"
+        }
     }
     
     static Toggle()
@@ -186,10 +210,9 @@ RunAsInteractiveUser()
 {
     if A_IsAdmin
     {
-        try WdcRunTaskAsInteractiveUser(A_ScriptFullPath, NULL)
+        try WdcRunTaskAsInteractiveUser(GetCommandLine(), NULL)
         
-        ;// https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
-        ExitApp ERROR_ACCESS_DENIED := 0x5
+        ExitApp A_LastError
     }
 }
 
@@ -201,7 +224,11 @@ UpdateIcon(shqrbi)
     try
         SHQueryRecycleBin(NULL, shqrbi)
     catch
+    {
+        A_IconTip := MUI.szError
+        TraySetIcon "imageres", IMAGERES_RECYCLER_ERROR
         return
+    }
     
     i64Size := shqrbi.i64Size
     i64NumItems := shqrbi.i64NumItems
@@ -213,16 +240,20 @@ UpdateIcon(shqrbi)
     i64PrevSize := i64Size
     i64PrevNumItems := i64NumItems
     
-    szSize := StrFormatByteSize(i64Size)
+    try
+        szSize := StrFormatByteSize(i64Size)
+    catch
+        szSize := MUI.szError
+        
     szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
                             ,"%s"
                             ,i64NumItems)
     
     A_IconTip := szNumItems "`n" szSize
     
-    TraySetIcon "shell32", i64NumItems
-                           ? SHSTOCKICONID.SIID_RECYCLERFULL
-                           : SHSTOCKICONID.SIID_RECYCLER
+    TraySetIcon "imageres", i64NumItems
+                          ? IMAGERES_RECYCLER_FULL
+                          : IMAGERES_RECYCLER
 }
 
 UpdateMenu(shqrbi, *)
@@ -238,7 +269,15 @@ UpdateMenu(shqrbi, *)
     try
         SHQueryRecycleBin(NULL, shqrbi)
     catch
+    {
+        A_TrayMenu.Rename "1&", MUI.szError
+        A_TrayMenu.Rename "2&", MUI.szError
+        A_TrayMenu.Enable MUI.szEmptyRecycleBin 
+        A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
+                          ,"imageres"
+                          ,IMAGERES_RECYCLER_ERROR
         return
+    }
     
     i64Size := shqrbi.i64Size
     i64NumItems := shqrbi.i64NumItems
@@ -250,7 +289,11 @@ UpdateMenu(shqrbi, *)
     i64PrevSize := i64Size
     i64PrevNumItems := i64NumItems
     
-    szSize := StrFormatByteSize(i64Size)
+    try
+        szSize := StrFormatByteSize(i64Size)
+    catch
+        szSize := MUI.szError
+        
     szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
                             ,"%s"
                             ,i64NumItems)
@@ -262,29 +305,21 @@ UpdateMenu(shqrbi, *)
     {
         A_TrayMenu.Enable MUI.szEmptyRecycleBin
         A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
-                          ,"shell32"
-                          ,SHSTOCKICONID.SIID_RECYCLERFULL
+                          ,"imageres"
+                          ,IMAGERES_RECYCLER_FULL
     }
     else
     {
         A_TrayMenu.Disable MUI.szEmptyRecycleBin
         A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
-                          ,"shell32"
-                          ,SHSTOCKICONID.SIID_RECYCLER
+                          ,"imageres"
+                          ,IMAGERES_RECYCLER
     }
 }
 
 ;///////////////////////////////////////////////////////////////////////////////
 ;// WinApi
 ;///////////////////////////////////////////////////////////////////////////////
-
-class SHSTOCKICONID
-{
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/ne-shellapi-shstockiconid
-    
-    static SIID_RECYCLER := 32
-          ,SIID_RECYCLERFULL := 33
-}
 
 WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 {
@@ -303,6 +338,7 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 
 #Include WinApi\libloaderapi\FreeLibrary.ahk
 #Include WinApi\libloaderapi\LoadLibrary.ahk
+#Include WinApi\processenv\GetCommandLine.ahk
 #Include WinApi\shellapi\SHEmptyRecycleBin.ahk
 #Include WinApi\shellapi\SHQUERYRBINFO.ahk
 #Include WinApi\shellapi\SHQueryRecycleBin.ahk
