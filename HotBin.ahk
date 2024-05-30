@@ -31,7 +31,7 @@ Main()
 {
     RunAsInteractiveUser()
     
-    if RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0)
+    if RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0) = 1
         RunAtStartup.Enable()
     
     ;// HotBin.iss
