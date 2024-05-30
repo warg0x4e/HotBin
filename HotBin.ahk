@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.7.15.0
+;@Ahk2Exe-Let AppVersion = 2.7.15.1
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -25,17 +25,12 @@ global NONE := ""
 Main()
 Main()
 {
-    RunAsInteractiveUser()
-    
     ;// HotBin.iss
     Loop A_Args.Length
-    {
         if A_Args.Pop() = "/RunAtStartup"
-        {
             RunAtStartup.Enable()
-            ExitApp
-        }
-    }
+            
+    RunAsInteractiveUser()
     
     ;// https://jrsoftware.org/ishelp/index.php?topic=setup_appmutex
     try CreateMutex(NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}")
@@ -191,7 +186,7 @@ RunAsInteractiveUser()
 {
     if A_IsAdmin
     {
-        try WdcRunTaskAsInteractiveUser(GetCommandLine(), NULL)
+        try WdcRunTaskAsInteractiveUser(A_ScriptFullPath, NULL)
         
         ;// https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
         ExitApp ERROR_ACCESS_DENIED := 0x5
@@ -308,7 +303,6 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 
 #Include WinApi\libloaderapi\FreeLibrary.ahk
 #Include WinApi\libloaderapi\LoadLibrary.ahk
-#Include WinApi\processenv\GetCommandLine.ahk
 #Include WinApi\shellapi\SHEmptyRecycleBin.ahk
 #Include WinApi\shellapi\SHQUERYRBINFO.ahk
 #Include WinApi\shellapi\SHQueryRecycleBin.ahk
