@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.7.15.1
+;@Ahk2Exe-Let AppVersion = 2.7.16.0
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -31,15 +31,21 @@ Main()
 {
     RunAsInteractiveUser()
     
+    if RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0)
+        RunAtStartup.Enable()
+    
+    ;// HotBin.iss
+    ;// https://jrsoftware.org/ishelp/index.php?topic=runsection
     try
-        if A_Args.Pop() = "/RunAtStartup"
+        if A_Args[1] = "/RunAtStartup"
             RunAtStartup.Enable()
     
+    ;// HotBin.iss
     ;// https://jrsoftware.org/ishelp/index.php?topic=setup_appmutex
     try CreateMutex(NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}")
     
-    if dwError := A_LastError
-        ExitApp dwError
+    if A_LastError
+        ExitApp A_LastError
     
     MUI.Load()
     CreateMenu()
@@ -87,8 +93,11 @@ class MUI
         
         try
         {
-            hMMRes := LoadLibrary("mmres")
-            hShell32 := LoadLibrary("shell32")
+            try
+            {
+                hMMRes := LoadLibrary("mmres")
+                hShell32 := LoadLibrary("shell32")
+            }
             
             szClose := LoadString(hShell32, 12851)
             szEmptyRecycleBin := LoadString(hMMRes, 5831)
@@ -98,13 +107,18 @@ class MUI
             szOpen := LoadString(hShell32, 12850)
             szStartup := LoadString(hShell32, 21787)
             
-            try FreeLibrary(hMMRes)
-            try FreeLibrary(hShell32)
-            
             bRTL := GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LCType) = 1
         }
         catch
             return
+        finally
+        {
+            try
+            {
+                FreeLibrary(hMMRes)
+                FreeLibrary(hShell32)
+            }
+        }
         
         this.bRTL := bRTL
         this.szClose := szClose
@@ -126,40 +140,42 @@ class RunAtStartup
     {
         try
         {
-            RegWrite "1"
-                    ,"REG_SZ"
-                    ,"HKCU\SOFTWARE\HotBin"
-                    ,"RunAtStartup"
-            
             RegWrite '"' A_ScriptFullPath '"'
                     ,"REG_SZ"
                     ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
                     ,"HotBin"
         }
+        catch
+            return
+            
+        try
+        {
+            RegWrite "1"
+                    ,"REG_SZ"
+                    ,"HKCU\SOFTWARE\HotBin"
+                    ,"RunAtStartup"
+        }
     }
     
     static Enabled()
     {
-        bEnabled := RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0)
-        
-        ;// Ensure.
-        if bEnabled
-            this.Enable()
-        else
-            this.Disable()
-        
-        return bEnabled
+        return RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0) = 1
     }
     
     static Disable()
     {
         try
         {
-            RegDelete "HKCU\SOFTWARE\HotBin"
-                     ,"RunAtStartup"
-            
             RegDelete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
                      ,"HotBin"
+        }
+        catch
+            return
+        
+        try
+        {
+            RegDelete "HKCU\SOFTWARE\HotBin"
+                     ,"RunAtStartup"
         }
     }
     
@@ -210,7 +226,7 @@ RunAsInteractiveUser()
 {
     if A_IsAdmin
     {
-        try WdcRunTaskAsInteractiveUser(GetCommandLine(), NULL)
+        try WdcRunTaskAsInteractiveUser(A_ScriptFullPath, A_ScriptDir)
         
         ExitApp A_LastError
     }
@@ -222,9 +238,10 @@ UpdateIcon(shqrbi)
           ,i64PrevNumItems := -1
     
     try
-        SHQueryRecycleBin(NULL, shqrbi)
+        SHQueryRecycleBin(NONE, shqrbi)
     catch
     {
+        ;// Never should occur.
         A_IconTip := MUI.szError
         TraySetIcon "imageres", IMAGERES_RECYCLER_ERROR
         return
@@ -243,6 +260,7 @@ UpdateIcon(shqrbi)
     try
         szSize := StrFormatByteSize(i64Size)
     catch
+        ;// Never should occur.
         szSize := MUI.szError
         
     szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
@@ -267,9 +285,10 @@ UpdateMenu(shqrbi, *)
         A_TrayMenu.Uncheck MUI.szStartup
     
     try
-        SHQueryRecycleBin(NULL, shqrbi)
+        SHQueryRecycleBin(NONE, shqrbi)
     catch
     {
+        ;// Never should occur.
         A_TrayMenu.Rename "1&", MUI.szError
         A_TrayMenu.Rename "2&", MUI.szError
         A_TrayMenu.Enable MUI.szEmptyRecycleBin 
@@ -292,6 +311,7 @@ UpdateMenu(shqrbi, *)
     try
         szSize := StrFormatByteSize(i64Size)
     catch
+        ;// Never should occur.
         szSize := MUI.szError
         
     szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
@@ -317,9 +337,9 @@ UpdateMenu(shqrbi, *)
     }
 }
 
-;///////////////////////////////////////////////////////////////////////////////
-;// WinApi
-;///////////////////////////////////////////////////////////////////////////////
+;===============================================================================
+;                                 WinApi
+;===============================================================================
 
 WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 {
@@ -338,7 +358,6 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 
 #Include WinApi\libloaderapi\FreeLibrary.ahk
 #Include WinApi\libloaderapi\LoadLibrary.ahk
-#Include WinApi\processenv\GetCommandLine.ahk
 #Include WinApi\shellapi\SHEmptyRecycleBin.ahk
 #Include WinApi\shellapi\SHQUERYRBINFO.ahk
 #Include WinApi\shellapi\SHQueryRecycleBin.ahk

@@ -11,7 +11,7 @@ class SHQUERYRBINFO extends Buffer
     __New()
     {
         cbSize := A_PtrSize + 16
-        super.__New(cbSize)
+        super.__New(cbSize, 0)
         NumPut("UInt", cbSize, this)
     }
 }
