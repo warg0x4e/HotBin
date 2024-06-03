@@ -31,16 +31,6 @@ Main()
 {
     RunAsInteractiveUser()
     
-    if RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0) = 1
-        RunAtStartup.Enable()
-    
-    ;// HotBin.iss
-    ;// https://jrsoftware.org/ishelp/index.php?topic=runsection
-    try
-        if A_Args[1] = "/RunAtStartup"
-            RunAtStartup.Enable()
-    
-    ;// HotBin.iss
     ;// https://jrsoftware.org/ishelp/index.php?topic=setup_appmutex
     try CreateMutex(NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}")
     
@@ -123,50 +113,32 @@ class MUI
 
 class RunAtStartup
 {
-    static Enable()
-    {
-        try
-        {
-            RegWrite '"' A_ScriptFullPath '"'
-                    ,"REG_SZ"
-                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                    ,"HotBin"
-        }
-        catch
-            return
-            
-        try
-        {
-            RegWrite "1"
-                    ,"REG_SZ"
-                    ,"HKCU\SOFTWARE\HotBin"
-                    ,"RunAtStartup"
-        }
-    }
+    static szKeyName := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
     
-    static Enabled()
+    static Load()
     {
-        return RegRead("HKCU\SOFTWARE\HotBin", "RunAtStartup", 0) = 1
+        try RegWrite '"' A_ScriptFullPath '"', "REG_SZ", this.szKeyName, "HotBin"
     }
     
     static Disable()
     {
-        try
-        {
-            RegDelete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                     ,"HotBin"
-        }
-        catch
-            return
-        
-        try
-        {
-            RegDelete "HKCU\SOFTWARE\HotBin"
-                     ,"RunAtStartup"
-        }
+        try RegWrite "010000", "REG_BINARY", this.szKeyName, "HotBin"
     }
     
-    static Disabled() => !this.Enabled()
+    static Disabled()
+    {
+        return Mod("0x" SubStr(RegRead(this.szKeyName, "HotBin", "00"), 2, 1), 2) = 1
+    }
+    
+    static Enable()
+    {
+        try RegWrite "000000", "REG_BINARY", this.szKeyName, "HotBin"
+    }
+    
+    static Enabled()
+    {
+        return Mod("0x" SubStr(RegRead(this.szKeyName, "HotBin", "00"), 2, 1), 2) = 0
+    }
     
     static Toggle()
     {
