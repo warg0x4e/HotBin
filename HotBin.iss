@@ -64,6 +64,7 @@ Name: "{group}\HotBin"; Filename: "{app}\HotBin.exe"
 
 [Registry]
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "HotBin"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"; ValueName: "HotBin"; Flags: uninsdeletevalue
 
 [Run]
 Filename: "{app}\HotBin.exe"; Description: "Run HotBin"; Flags: nowait postinstall skipifsilent
