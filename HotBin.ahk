@@ -69,23 +69,13 @@ Main()
 
 class MUI
 {
-    static bRTL := false
-          ,szClose := "Close"
-          ,szEmptyRecycleBin := "Empty Recycle Bin"
-          ,szError := "Error"
-          ,szItem := "%s item"
-          ,szItems := "%s items"
-          ,szOpen := "Open"
-          ,szStartup := "Startup"
-    
     static Load()
     {
-        ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-name-constants
-        LOCALE_NAME_USER_DEFAULT := NULL
-        
+        ;// winnls.h
         ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-ireadinglayout
         LOCALE_IREADINGLAYOUT := 0x70
         
+        ;// winnls.h
         ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-return-constants
         LOCALE_RETURN_NUMBER := 0x20000000
         
@@ -93,37 +83,41 @@ class MUI
         
         try
         {
+            this.bRTL := GetLocaleInfoEx(NULL, LCType) = 1
+            
             hMMRes := LoadLibrary("mmres")
             hShell32 := LoadLibrary("shell32")
             
-            szClose := LoadString(hShell32, 12851)
-            szEmptyRecycleBin := LoadString(hMMRes, 5831)
-            szError := LoadString(hShell32, 51248)
-            szItem := LoadString(hShell32, 38193)
-            szItems := LoadString(hShell32, 38192)
-            szOpen := LoadString(hShell32, 12850)
-            szStartup := LoadString(hShell32, 21787)
-            
-            bRTL := GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LCType) = 1
+            this.szClose := LoadString(hShell32, 12851)
+            this.szEmptyRecycleBin := LoadString(hMMRes, 5831)
+            this.szError := LoadString(hShell32, 51248)
+            this.szItem := LoadString(hShell32, 38193)
+            this.szItems := LoadString(hShell32, 38192)
+            this.szOpen := LoadString(hShell32, 12850)
+            this.szStartup := LoadString(hShell32, 21787)
         }
         catch
-            return
+        {
+            this.bRTL := false
+            this.szClose := "Close"
+            this.szEmptyRecycleBin := "Empty Recycle Bin"
+            this.szError := "Error"
+            this.szItem := "%s item"
+            this.szItems := "%s items"
+            this.szOpen := "Open"
+            this.szStartup := "Startup"
+        }
         finally
         {
-            if IsSet(hMMRes)
-                try FreeLibrary(hMMRes)
-            if IsSet(hShell32)
-                try FreeLibrary(hShell32)
+            try
+            {
+                if IsSet(hMMRes)
+                    FreeLibrary(hMMRes)
+                    
+                if IsSet(hShell32)
+                    FreeLibrary(hShell32)
+            }
         }
-        
-        this.bRTL := bRTL
-        this.szClose := szClose
-        this.szEmptyRecycleBin := szEmptyRecycleBin
-        this.szError := szError
-        this.szItem := szItem
-        this.szItems := szItems
-        this.szOpen := szOpen
-        this.szStartup := szStartup
     }
 }
 
