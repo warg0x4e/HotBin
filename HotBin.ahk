@@ -117,7 +117,7 @@ class RunAtStartup
     
     static Load()
     {
-        try RegWrite '"' A_ScriptFullPath '"', "REG_SZ", this.szKeyName, "HotBin"
+        try RegWrite '"' A_ScriptFullPath '"', "REG_SZ", "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "HotBin"
     }
     
     static Disable()
