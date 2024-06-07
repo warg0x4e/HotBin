@@ -4,7 +4,7 @@ SHQueryRecycleBin(pszRootPath, pSHQueryRBInfo)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shqueryrecyclebinw
     
-    return DllCall("shell32\SHQueryRecycleBin"
+    return DllCall("shell32\SHQueryRecycleBinW"
                   ,"WStr", pszRootPath
                   ,"Ptr", pSHQueryRBInfo
                   ,"HRESULT")
