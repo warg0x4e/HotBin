@@ -7,10 +7,10 @@ CreateMutex(lpMutexAttributes, bInitialOwner, lpName)
     if HANDLE := DllCall("kernel32\CreateMutexW"
                         ,"Ptr", lpMutexAttributes
                         ,"Int", bInitialOwner
-                        ,lpName is Integer ? "Ptr" : "WStr", lpName
+                        ,"WStr", lpName
                         ,"Ptr")
         
         return HANDLE
     
-    throw OSError(A_LastError, A_ThisFunc, HANDLE)
+    throw Error(HANDLE, A_ThisFunc)
 }

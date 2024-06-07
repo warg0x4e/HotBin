@@ -4,14 +4,14 @@ LoadString(hInstance, uID)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-loadstringw
     
-    if cchBufMax := DllCall("user32\LoadStringW"
-                           ,"Ptr", hInstance
-                           ,"UInt", uID
-                           ,"PtrP", &(lpBuf := 0)
-                           ,"Int", 0
-                           ,"Int")
+    if cch := DllCall("user32\LoadStringW"
+                     ,"Ptr", hInstance
+                     ,"UInt", uID
+                     ,"PtrP", &(lpBuffer := 0)
+                     ,"Int", 0
+                     ,"Int")
         
-        return StrGet(lpBuf, cchBufMax)
+        return StrGet(lpBuffer, cch)
     
-    throw Error(A_LastError, A_ThisFunc, cchBufMax)
+    throw Error(cch, A_ThisFunc)
 }
