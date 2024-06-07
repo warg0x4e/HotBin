@@ -175,7 +175,7 @@ CreateMenu()
 
 EmptyRecycleBin()
 {
-    try SHEmptyRecycleBin(NULL, NULL, NULL)
+    try SHEmptyRecycleBin(NULL, NONE, 0)
 }
 
 OpenRecycleBin()
