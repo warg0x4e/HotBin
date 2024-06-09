@@ -9,6 +9,6 @@ FreeLibrary(hLibModule)
                       ,"Int")
         
         return BOOL
-    
-    throw Error(hLibModule, A_ThisFunc)
+        
+    throw Error(BOOL, A_ThisFunc)
 }
