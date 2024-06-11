@@ -22,19 +22,22 @@ InstallMouseHook false
 NONE := ""
 NULL := 0
 
-AHK_NOTIFYICON := 0x404
-
 LOCALAPPDATA := EnvGet("LOCALAPPDATA")
 
-ICON_ERROR := -5305
-ICON_RECYCLER := -55
+;// imageres.dll
+ICON_RECYCLER_EMPTY := -55
+ICON_RECYCLER_ERROR := -5305
 ICON_RECYCLER_FULL := -54
+
+;// https://github.com/AutoHotkey/AutoHotkey/blob/v2.0/source/hook.h
+AHK_NOTIFYICON := 0x404
 
 ;// winerror.h
 ERROR_NOT_SUPPORTED := 0x32
 
 ;// winnls.h
 LOCALE_IREADINGLAYOUT := 0x70
+LOCALE_NAME_USER_DEFAULT := NULL
 
 ;// winuser.h
 WM_INITMENUPOPUP := 0x117
@@ -65,11 +68,11 @@ Main()
         TrayMenu.Load
     catch OSError as Err
         ExitApp Err.Number
-        
-    ProcessSetPriority "Low"
     
     NativeLanguage.DeleteProp "bRTL"
     NativeLanguage.DeleteProp "szClose"
+        
+    ProcessSetPriority "Low"
 }
 
 class NativeLanguage
@@ -186,30 +189,31 @@ class TrayMenu
         NativeLanguage.Load
         RunAtUserLogon.Load
         
+        bRTL := NativeLanguage.bRTL
+        szClose := NativeLanguage.szClose
+        szEmptyRecycleBin := NativeLanguage.szEmptyRecycleBin
+        szHelp := NativeLanguage.szHelp
+        szOpen := NativeLanguage.szOpen
+        szRunAtUserLogon := NativeLanguage.szRunAtUserLogon
+        
         A_TrayMenu.Delete
         
         A_TrayMenu.Add "1", (*) => NULL
         A_TrayMenu.Add "2", (*) => NULL
         A_TrayMenu.Add
-        A_TrayMenu.Add NativeLanguage.szRunAtUserLogon
-                      ,(*) => RunAtUserLogon.Toggle()
+        A_TrayMenu.Add szRunAtUserLogon, (*) => RunAtUserLogon.Toggle()
         A_TrayMenu.Add
-        A_TrayMenu.Add NativeLanguage.szOpen
-                      ,(*) => this.Open()
+        A_TrayMenu.Add szOpen, (*) => this.Open()
         A_TrayMenu.Add
-        A_TrayMenu.Add NativeLanguage.szEmptyRecycleBin
-                      ,(*) => this.Empty()
+        A_TrayMenu.Add szEmptyRecycleBin, (*) => this.Empty()
         A_TrayMenu.Add
-        A_TrayMenu.Add NativeLanguage.szHelp
-                      ,(*) => this.Help()
+        A_TrayMenu.Add szHelp, (*) => this.Help()
         A_TrayMenu.Add
-        A_TrayMenu.Add NativeLanguage.szClose
-                      ,(*) => Close()
+        A_TrayMenu.Add szClose, (*) => Close()
         
         A_TrayMenu.ClickCount := 1
         
-        WinSetExStyle NativeLanguage.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL
-                     ,A_ScriptHwnd
+        WinSetExStyle bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL, A_ScriptHwnd
         
         OnMessage AHK_NOTIFYICON, On_AHK_NOTIFYICON
         OnMessage WM_INITMENUPOPUP, On_WM_INITMENUPOPUP
@@ -238,33 +242,53 @@ class TrayMenu
         try Run "shell:RecycleBinFolder"
     }
     
+    static SetCustomMenuItemIcon(szMenuItem, szIcon)
+    {
+        Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+        {
+            try
+            {
+                A_TrayMenu.SetIcon szMenuItem, A_LoopField "\" szIcon
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    static SetCustomTrayIcon(szIcon)
+    {
+        Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+        {
+            try
+            {
+                TraySetIcon A_LoopField "\" szIcon
+                return true
+            }
+        }
+        
+        return false
+    }
+    
     static UpdateIcon()
     {
         static i64PrevSize := -1
               ,i64PrevNumItems := -1
               ,pSHQueryRBInfo := this.pSHQueryRBInfo
         
-        bCustomIcon := false
+        szError := NativeLanguage.szError
+        szItem := NativeLanguage.szItem
+        szItems := NativeLanguage.szItems
         
         try
-            SHQueryRecycleBin(NONE, pSHQueryRBInfo)
+            SHQueryRecycleBin NONE, pSHQueryRBInfo
         catch
         {
-            A_IconTip := NativeLanguage.szError
+            A_IconTip := szError
             
-            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
-            {
-                try
-                {
-                    TraySetIcon A_LoopField "\error.ico"
-                    bCustomIcon := true
-                    break
-                }
-            }
-            
-            if !bCustomIcon
+            if !this.SetCustomTrayIcon("error.ico")
                 TraySetIcon "imageres", ICON_RECYCLER_ERROR
-                
+            
             return
         }
         
@@ -281,11 +305,11 @@ class TrayMenu
         try
             szSize := StrFormatByteSize(i64Size)
         catch
-            szSize := NativeLanguage.szError
+            szSize := szError
             
         szNumItems := StrReplace(i64NumItems = 1
-                                 ? NativeLanguage.szItem
-                                 : NativeLanguage.szItems
+                                ? szItem
+                                : szItems
                                 ,"%s"
                                 ,i64NumItems)
         
@@ -293,33 +317,13 @@ class TrayMenu
         
         if i64NumItems
         {
-            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
-            {
-                try
-                {
-                    TraySetIcon A_LoopField "\recyclerfull.ico"
-                    bCustomIcon := true
-                    break
-                }
-            }
-            
-            if !bCustomIcon
+            if !this.SetCustomTrayIcon("full.ico")
                 TraySetIcon "imageres", ICON_RECYCLER_FULL
         }
         else
         {
-            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
-            {
-                try
-                {
-                    TraySetIcon A_LoopField "\recycler.ico"
-                    bCustomIcon := true
-                    break
-                }
-            }
-            
-            if !bCustomIcon
-                TraySetIcon "imageres", ICON_RECYCLER
+            if !this.SetCustomTrayIcon("empty.ico")
+                TraySetIcon "imageres", ICON_RECYCLER_EMPTY
         }
     }
     
@@ -329,35 +333,28 @@ class TrayMenu
               ,i64PrevNumItems := -1
               ,pSHQueryRBInfo := this.pSHQueryRBInfo
         
+        szEmptyRecycleBin := NativeLanguage.szEmptyRecycleBin
+        szError := NativeLanguage.szError
+        szItem := NativeLanguage.szItem
+        szItems := NativeLanguage.szItems
+        szRunAtUserLogon := NativeLanguage.szRunAtUserLogon
+        
         if RunAtUserLogon.IsEnabled()
-            A_TrayMenu.Check NativeLanguage.szRunAtUserLogon
+            A_TrayMenu.Check szRunAtUserLogon
         else
-            A_TrayMenu.Uncheck NativeLanguage.szRunAtUserLogon
-            
-        bCustomIcon := false
+            A_TrayMenu.Uncheck szRunAtUserLogon
         
         try
-            SHQueryRecycleBin(NONE, pSHQueryRBInfo)
+            SHQueryRecycleBin NONE, pSHQueryRBInfo
         catch
         {
-            A_TrayMenu.Rename "1&", NativeLanguage.szError
-            A_TrayMenu.Rename "2&", NativeLanguage.szError
+            A_TrayMenu.Rename "1&", szError
+            A_TrayMenu.Rename "2&", szError
             
-            A_TrayMenu.Disable NativeLanguage.szEmptyRecycleBin
+            A_TrayMenu.Disable szEmptyRecycleBin
             
-            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
-            {
-                try
-                {
-                    A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
-                                      ,A_LoopField "\error.ico"
-                    bCustomIcon := true
-                    break
-                }
-            }
-            
-            if !bCustomIcon
-                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+            if !this.SetCustomMenuItemIcon(szEmptyRecycleBin, "error.ico")
+                A_TrayMenu.SetIcon szEmptyRecycleBin
                                   ,"imageres"
                                   ,ICON_RECYCLER_ERROR
             
@@ -377,11 +374,11 @@ class TrayMenu
         try
             szSize := StrFormatByteSize(i64Size)
         catch
-            szSize := NativeLanguage.szError
+            szSize := szError
             
         szNumItems := StrReplace(i64NumItems = 1
-                                 ? NativeLanguage.szItem
-                                 : NativeLanguage.szItems
+                                 ? szItem
+                                 : szItems
                                 ,"%s"
                                 ,i64NumItems)
         
@@ -390,43 +387,21 @@ class TrayMenu
         
         if i64NumItems
         {
-            A_TrayMenu.Enable NativeLanguage.szEmptyRecycleBin
+            A_TrayMenu.Enable szEmptyRecycleBin
             
-            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
-            {
-                try
-                {
-                    A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
-                                      ,A_LoopField "\recyclerfull.ico"
-                    bCustomIcon := true
-                    break
-                }
-            }
-            
-            if !bCustomIcon
-                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+            if !this.SetCustomMenuItemIcon(szEmptyRecycleBin, "full.ico")
+                A_TrayMenu.SetIcon szEmptyRecycleBin
                                   ,"imageres"
                                   ,ICON_RECYCLER_FULL
         }
         else
         {
-            A_TrayMenu.Disable NativeLanguage.szEmptyRecycleBin
+            A_TrayMenu.Disable szEmptyRecycleBin
             
-            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
-            {
-                try
-                {
-                    A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
-                                      ,A_LoopField "\recycler.ico"
-                    bCustomIcon := true
-                    break
-                }
-            }
-            
-            if !bCustomIcon
-                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+            if !this.SetCustomMenuItemIcon(szEmptyRecycleBin, "empty.ico")
+                A_TrayMenu.SetIcon szEmptyRecycleBin
                                   ,"imageres"
-                                  ,ICON_RECYCLER
+                                  ,ICON_RECYCLER_EMPTY
         }
     }
 }
