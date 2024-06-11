@@ -59,18 +59,18 @@ Main()
     
     if A_LastError
         ExitApp A_LastError
-    
+        
     try DirCreate LOCALAPPDATA "\HotBin"
     
     try
         TrayMenu.Load
     catch OSError as Err
         ExitApp Err.Number
-    
+        
     ProcessSetPriority "Low"
     
     NativeLanguage.DeleteProp "bRTL"
-    NativeLanguage.DeleteProp "szQuit"
+    NativeLanguage.DeleteProp "szClose"
 }
 
 class NativeLanguage
@@ -79,36 +79,32 @@ class NativeLanguage
     {
         try
         {
-            hDInput := LoadLibrary("dinput")
             hMMRes := LoadLibrary("mmres")
             hMSTask := LoadLibrary("mstask")
             hShell32 := LoadLibrary("shell32")
             
             this.bRTL := GetLocaleInfoEx(NULL, LOCALE_IREADINGLAYOUT) = 1
+            this.szClose := LoadString(hShell32, 12851)
             this.szEmptyRecycleBin := LoadString(hMMRes, 5831)
             this.szError := LoadString(hShell32, 51248)
-            this.szHelp := LoadString(hDInput, 5269)
+            this.szHelp := LoadString(hShell32, 30489)
             this.szItem := LoadString(hShell32, 38193)
             this.szItems := LoadString(hShell32, 38192)
             this.szOpen := LoadString(hShell32, 12850)
-            this.szQuit := LoadString(hDInput, 5268)
             this.szRunAtUserLogon := LoadString(hMSTask, 1130)
         }
         catch
         {
             this.bRTL := false
+            this.szClose := "Close"
             this.szEmptyRecycleBin := "Empty Recycle Bin"
             this.szError := "Error"
             this.szHelp := "Help"
             this.szItem := "%s item"
             this.szItems := "%s items"
             this.szOpen := "Open"
-            this.szQuit := "Quit"
             this.szRunAtUserLogon := "Run at user logon"
         }
-        
-        if IsSet(hDInput)
-            try FreeLibrary hDInput
         
         if IsSet(hMMRes)
             try FreeLibrary hMMRes
@@ -118,7 +114,7 @@ class NativeLanguage
             
         if IsSet(hShell32)
             try FreeLibrary hShell32
-        
+            
         this.DeleteProp "Load"
     }
 }
@@ -135,7 +131,7 @@ class RunAtUserLogon
             this.Disable
         else
             this.Update
-        
+            
         OnExit ObjBindMethod(this, "Update")
         
         this.DeleteProp "Load"
@@ -144,6 +140,7 @@ class RunAtUserLogon
     static Disable()
     {
         try RegWrite "030000", "REG_BINARY", this.szKey, "HotBin"
+        
         this.Update
     }
     
@@ -155,6 +152,7 @@ class RunAtUserLogon
     static Enable()
     {
         try RegWrite "020000", "REG_BINARY", this.szKey, "HotBin"
+        
         this.Update
     }
     
@@ -206,18 +204,19 @@ class TrayMenu
         A_TrayMenu.Add NativeLanguage.szHelp
                       ,(*) => this.Help()
         A_TrayMenu.Add
-        A_TrayMenu.Add NativeLanguage.szQuit
-                      ,(*) => Quit()
+        A_TrayMenu.Add NativeLanguage.szClose
+                      ,(*) => Close()
         
         A_TrayMenu.ClickCount := 1
         
         WinSetExStyle NativeLanguage.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL
                      ,A_ScriptHwnd
-    
+        
         OnMessage AHK_NOTIFYICON, On_AHK_NOTIFYICON
         OnMessage WM_INITMENUPOPUP, On_WM_INITMENUPOPUP
         
         this.UpdateIcon
+        
         SetTimer ObjBindMethod(this, "UpdateIcon"), 500
         
         this.DeleteProp "Load"
@@ -264,7 +263,7 @@ class TrayMenu
             
             if !bCustomIcon
                 TraySetIcon "imageres", ICON_RECYCLER_ERROR
-            
+                
             return
         }
         
@@ -333,7 +332,7 @@ class TrayMenu
             A_TrayMenu.Check NativeLanguage.szRunAtUserLogon
         else
             A_TrayMenu.Uncheck NativeLanguage.szRunAtUserLogon
-        
+            
         bCustomIcon := false
         
         try
@@ -459,7 +458,7 @@ On_WM_INITMENUPOPUP(*)
     return 0
 }
 
-Quit()
+Close()
 {
     if GetKeyState("Ctrl")
         Reload
