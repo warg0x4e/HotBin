@@ -8,6 +8,7 @@
 
 #Requires AutoHotkey v2.0+
 
+#NoTrayIcon
 #SingleInstance Off
 #Warn All, Off
 
@@ -218,6 +219,8 @@ class TrayMenu
         this.UpdateIcon
         
         SetTimer ObjBindMethod(this, "UpdateIcon"), 500
+        
+        A_IconHidden := false
         
         this.DeleteProp "Load"
     }
