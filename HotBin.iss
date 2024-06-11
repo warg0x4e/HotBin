@@ -1,4 +1,4 @@
-#define AppVersion "2.7.16.1"
+#define AppVersion "2.9.0.0"
 
 [Setup]
 AppComments=Easily access the Recycle Bin from the System Tray.
@@ -14,6 +14,7 @@ AppVersion={#AppVersion}
 ArchitecturesInstallIn64BitMode=x64
 DefaultDirName={autopf}\HotBin
 DefaultGroupName=HotBin
+MinVersion=6.3
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
 SetupMutex=HotBinSetupMutex,Global\HotBinSetupMutex
@@ -30,7 +31,7 @@ VersionInfoVersion={#AppVersion}
 [Files]
 Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
 Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
@@ -67,4 +68,4 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"; ValueName: "HotBin"; Flags: uninsdeletevalue
 
 [Run]
-Filename: "{app}\HotBin.exe"; Description: "Run HotBin"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\HotBin.exe"; Flags: nowait postinstall skipifsilent

@@ -22,5 +22,5 @@ GetLocaleInfoEx(lpLocaleName, LCType)
         
         throw Error(cchData, A_ThisFunc)
     
-    return StrGet(lpLCData, "UTF-16")
+    return StrGet(lpLCData, cchData, "UTF-16")
 }

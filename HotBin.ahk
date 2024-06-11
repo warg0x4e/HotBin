@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.7.16.1
+;@Ahk2Exe-Let AppVersion = 2.9.0.0
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -8,7 +8,6 @@
 
 #Requires AutoHotkey v2.0+
 
-#NoTrayIcon
 #SingleInstance Off
 #Warn All, Off
 
@@ -19,306 +18,479 @@ Persistent
 InstallKeybdHook false
 InstallMouseHook false
 
-global NONE := ""
-      ,NULL := 0
+NONE := ""
+NULL := 0
 
-global IMAGERES_RECYCLER := 51
-      ,IMAGERES_RECYCLER_ERROR := 246
-      ,IMAGERES_RECYCLER_FULL := 50
+AHK_NOTIFYICON := 0x404
+
+LOCALAPPDATA := EnvGet("LOCALAPPDATA")
+
+ICON_ERROR := -5305
+ICON_RECYCLER := -55
+ICON_RECYCLER_FULL := -54
+
+;// winerror.h
+ERROR_NOT_SUPPORTED := 0x32
+
+;// winnls.h
+LOCALE_IPOSITIVEPERCENT := 0x75
+LOCALE_IREADINGLAYOUT := 0x70
+LOCALE_SPERCENT := 0x76
+
+;// winuser.h
+WM_INITMENUPOPUP := 0x117
+WM_LBUTTONUP := 0x202
+WM_MBUTTONUP := 0x208
+WM_RBUTTONUP := 0x205
+WS_EX_LAYOUTRTL := 0x400000
 
 Main()
 Main()
 {
-    RunAsInteractiveUser()
+    if !IsWindows8Point1OrGreater()
+        ExitApp ERROR_NOT_SUPPORTED
+        
+    if !RunAsInteractiveUser()
+        ExitApp ERROR_NOT_SUPPORTED
+        
+    szAppId := "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}"
     
-    ;// https://jrsoftware.org/ishelp/index.php?topic=setup_appmutex
-    try CreateMutex(NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}")
+    try CreateMutex NULL, false, szAppId
     
     if A_LastError
         ExitApp A_LastError
     
-    MUI.Load()
-    CreateMenu()
+    try DirCreate LOCALAPPDATA "\HotBin"
     
-    ;// Free memory.
-    MUI.DeleteProp "bRTL"
-    MUI.DeleteProp "szClose"
-    MUI.DeleteProp "szOpen"
-    
-    shqrbi := SHQUERYRBINFO()
-    
-    UpdateIcon(shqrbi)
-    SetTimer UpdateIcon.Bind(shqrbi), 500
-    
-    ;// https://learn.microsoft.com/en-us/windows/win32/menurc/wm-initmenupopup
-    OnMessage WM_INITMENUPOPUP := 0x117, UpdateMenu.Bind(shqrbi)
+    try
+        TrayMenu.Load
+    catch OSError as Err
+        ExitApp Err.Number
     
     ProcessSetPriority "Low"
-    A_IconHidden := false
+    
+    NativeLanguage.DeleteProp "bRTL"
+    NativeLanguage.DeleteProp "szQuit"
 }
 
-class MUI
+class NativeLanguage
 {
     static Load()
     {
-        ;// winnls.h
-        ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-ireadinglayout
-        LOCALE_IREADINGLAYOUT := 0x70
-        
-        ;// winnls.h
-        ;// https://learn.microsoft.com/en-us/windows/win32/intl/locale-return-constants
-        LOCALE_RETURN_NUMBER := 0x20000000
-        
-        LCType := LOCALE_IREADINGLAYOUT | LOCALE_RETURN_NUMBER
-        
         try
         {
-            this.bRTL := GetLocaleInfoEx(NULL, LCType) = 1
-            
+            hDInput := LoadLibrary("dinput")
             hMMRes := LoadLibrary("mmres")
+            hMSTask := LoadLibrary("mstask")
             hShell32 := LoadLibrary("shell32")
             
-            this.szClose := LoadString(hShell32, 12851)
+            this.bRTL := GetLocaleInfoEx(NULL, LOCALE_IREADINGLAYOUT) = 1
             this.szEmptyRecycleBin := LoadString(hMMRes, 5831)
             this.szError := LoadString(hShell32, 51248)
+            this.szHelp := LoadString(hDInput, 5269)
             this.szItem := LoadString(hShell32, 38193)
             this.szItems := LoadString(hShell32, 38192)
             this.szOpen := LoadString(hShell32, 12850)
-            this.szStartup := LoadString(hShell32, 21787)
+            this.szQuit := LoadString(hDInput, 5268)
+            this.szRunAtUserLogon := LoadString(hMSTask, 1130)
         }
         catch
         {
             this.bRTL := false
-            this.szClose := "Close"
             this.szEmptyRecycleBin := "Empty Recycle Bin"
             this.szError := "Error"
+            this.szHelp := "Help"
             this.szItem := "%s item"
             this.szItems := "%s items"
             this.szOpen := "Open"
-            this.szStartup := "Startup"
+            this.szQuit := "Quit"
+            this.szRunAtUserLogon := "Run at user logon"
         }
-        finally
-        {
-            try
-            {
-                if IsSet(hMMRes)
-                    FreeLibrary(hMMRes)
-                    
-                if IsSet(hShell32)
-                    FreeLibrary(hShell32)
-            }
-        }
+        
+        if IsSet(hDInput)
+            try FreeLibrary hDInput
+        
+        if IsSet(hMMRes)
+            try FreeLibrary hMMRes
+            
+        if IsSet(hMSTask)
+            try FreeLibrary hMSTask
+            
+        if IsSet(hShell32)
+            try FreeLibrary hShell32
+        
+        this.DeleteProp "Load"
     }
 }
 
-class RunAtStartup
+class RunAtUserLogon
 {
-    static szKeyName := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
+    static szKey := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
     
     static Load()
     {
-        try RegWrite '"' A_ScriptFullPath '"', "REG_SZ", "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "HotBin"
+        try
+            RegRead this.szKey, "HotBin"
+        catch
+            this.Disable
+        else
+            this.Update
+        
+        OnExit ObjBindMethod(this, "Update")
+        
+        this.DeleteProp "Load"
     }
     
     static Disable()
     {
-        try RegWrite "010000", "REG_BINARY", this.szKeyName, "HotBin"
+        try RegWrite "030000", "REG_BINARY", this.szKey, "HotBin"
+        this.Update
     }
     
-    static Disabled()
+    static IsDisabled()
     {
-        return Mod("0x" SubStr(RegRead(this.szKeyName, "HotBin", "00"), 2, 1), 2) = 1
+        return Mod(SubStr(RegRead(this.szKey, "HotBin", "00"), 2, 1), 2) = 1
     }
     
     static Enable()
     {
-        try RegWrite "000000", "REG_BINARY", this.szKeyName, "HotBin"
+        try RegWrite "020000", "REG_BINARY", this.szKey, "HotBin"
+        this.Update
     }
     
-    static Enabled()
+    static IsEnabled()
     {
-        return Mod("0x" SubStr(RegRead(this.szKeyName, "HotBin", "00"), 2, 1), 2) = 0
+        return Mod(SubStr(RegRead(this.szKey, "HotBin", "00"), 2, 1), 2) = 0
     }
     
     static Toggle()
     {
-        if this.Enabled()
-            this.Disable()
+        if this.IsEnabled()
+            this.Disable
         else
-            this.Enable()
+            this.Enable
+    }
+    
+    static Update(*)
+    {
+        try RegWrite GetCommandLine()
+                    ,"REG_SZ"
+                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                    ,"HotBin"
     }
 }
 
-CreateMenu()
+class TrayMenu
 {
-    A_TrayMenu.Delete
+    static pSHQueryRBInfo := SHQUERYRBINFO()
     
-    A_TrayMenu.Add "1", (*) => NULL
-    A_TrayMenu.Add "2", (*) => NULL
-    A_TrayMenu.Add
-    A_TrayMenu.Add MUI.szStartup, (*) => RunAtStartup.Toggle()
-    A_TrayMenu.Add
-    A_TrayMenu.Add MUI.szOpen, (*) => OpenRecycleBin()
-    A_TrayMenu.Add
-    A_TrayMenu.Add MUI.szEmptyRecycleBin, (*) => EmptyRecycleBin()
-    A_TrayMenu.Add
-    A_TrayMenu.Add MUI.szClose, (*) => ExitApp()
+    static Load()
+    {
+        NativeLanguage.Load
+        RunAtUserLogon.Load
+        
+        A_TrayMenu.Delete
+        
+        A_TrayMenu.Add "1", (*) => NULL
+        A_TrayMenu.Add "2", (*) => NULL
+        A_TrayMenu.Add
+        A_TrayMenu.Add NativeLanguage.szRunAtUserLogon
+                      ,(*) => RunAtUserLogon.Toggle()
+        A_TrayMenu.Add
+        A_TrayMenu.Add NativeLanguage.szOpen
+                      ,(*) => this.Open()
+        A_TrayMenu.Add
+        A_TrayMenu.Add NativeLanguage.szEmptyRecycleBin
+                      ,(*) => this.Empty()
+        A_TrayMenu.Add
+        A_TrayMenu.Add NativeLanguage.szHelp
+                      ,(*) => this.Help()
+        A_TrayMenu.Add
+        A_TrayMenu.Add NativeLanguage.szQuit
+                      ,(*) => Quit()
+        
+        A_TrayMenu.ClickCount := 1
+        
+        WinSetExStyle NativeLanguage.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL
+                     ,A_ScriptHwnd
     
-    A_TrayMenu.ClickCount := 1
-    A_TrayMenu.Default := MUI.szOpen
+        OnMessage AHK_NOTIFYICON, On_AHK_NOTIFYICON
+        OnMessage WM_INITMENUPOPUP, On_WM_INITMENUPOPUP
+        
+        this.UpdateIcon
+        SetTimer ObjBindMethod(this, "UpdateIcon"), 500
+        
+        this.DeleteProp "Load"
+    }
     
-    ;// https://learn.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
-    WS_EX_LAYOUTRTL := 0x400000
+    static Empty()
+    {
+        try SHEmptyRecycleBin NULL, NONE, 0
+    }
     
-    WinSetExStyle MUI.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL, A_ScriptHwnd
+    static Help()
+    {
+        try Run "https://github.com/warg0x4e/HotBin/issues"
+    }
+    
+    static Open()
+    {
+        try Run "shell:RecycleBinFolder"
+    }
+    
+    static UpdateIcon()
+    {
+        static i64PrevSize := -1
+              ,i64PrevNumItems := -1
+              ,pSHQueryRBInfo := this.pSHQueryRBInfo
+        
+        bCustomIcon := false
+        
+        try
+            SHQueryRecycleBin(NONE, pSHQueryRBInfo)
+        catch
+        {
+            A_IconTip := NativeLanguage.szError
+            
+            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+            {
+                try
+                {
+                    TraySetIcon A_LoopField "\error.ico"
+                    bCustomIcon := true
+                    break
+                }
+            }
+            
+            if !bCustomIcon
+                TraySetIcon "imageres", ICON_RECYCLER_ERROR
+            
+            return
+        }
+        
+        i64Size := pSHQueryRBInfo.i64Size
+        i64NumItems := pSHQueryRBInfo.i64NumItems
+        
+        if i64Size = i64PrevSize && i64NumItems = i64PrevNumItems
+            ;// No change.
+            return
+            
+        i64PrevSize := i64Size
+        i64PrevNumItems := i64NumItems
+        
+        try
+            szSize := StrFormatByteSize(i64Size)
+        catch
+            szSize := NativeLanguage.szError
+            
+        szNumItems := StrReplace(i64NumItems = 1
+                                 ? NativeLanguage.szItem
+                                 : NativeLanguage.szItems
+                                ,"%s"
+                                ,i64NumItems)
+        
+        A_IconTip := szSize "`n" szNumItems
+        
+        if i64NumItems
+        {
+            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+            {
+                try
+                {
+                    TraySetIcon A_LoopField "\recyclerfull.ico"
+                    bCustomIcon := true
+                    break
+                }
+            }
+            
+            if !bCustomIcon
+                TraySetIcon "imageres", ICON_RECYCLER_FULL
+        }
+        else
+        {
+            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+            {
+                try
+                {
+                    TraySetIcon A_LoopField "\recycler.ico"
+                    bCustomIcon := true
+                    break
+                }
+            }
+            
+            if !bCustomIcon
+                TraySetIcon "imageres", ICON_RECYCLER
+        }
+    }
+    
+    static UpdateMenu()
+    {
+        static i64PrevSize := -1
+              ,i64PrevNumItems := -1
+              ,pSHQueryRBInfo := this.pSHQueryRBInfo
+        
+        if RunAtUserLogon.IsEnabled()
+            A_TrayMenu.Check NativeLanguage.szRunAtUserLogon
+        else
+            A_TrayMenu.Uncheck NativeLanguage.szRunAtUserLogon
+        
+        bCustomIcon := false
+        
+        try
+            SHQueryRecycleBin(NONE, pSHQueryRBInfo)
+        catch
+        {
+            A_TrayMenu.Rename "1&", NativeLanguage.szError
+            A_TrayMenu.Rename "2&", NativeLanguage.szError
+            
+            A_TrayMenu.Disable NativeLanguage.szEmptyRecycleBin
+            
+            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+            {
+                try
+                {
+                    A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+                                      ,A_LoopField "\error.ico"
+                    bCustomIcon := true
+                    break
+                }
+            }
+            
+            if !bCustomIcon
+                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+                                  ,"imageres"
+                                  ,ICON_RECYCLER_ERROR
+            
+            return
+        }
+        
+        i64Size := pSHQueryRBInfo.i64Size
+        i64NumItems := pSHQueryRBInfo.i64NumItems
+        
+        if i64Size = i64PrevSize && i64NumItems = i64PrevNumItems
+            ;// No change.
+            return
+            
+        i64PrevSize := i64Size
+        i64PrevNumItems := i64NumItems
+        
+        try
+            szSize := StrFormatByteSize(i64Size)
+        catch
+            szSize := NativeLanguage.szError
+            
+        szNumItems := StrReplace(i64NumItems = 1
+                                 ? NativeLanguage.szItem
+                                 : NativeLanguage.szItems
+                                ,"%s"
+                                ,i64NumItems)
+        
+        A_TrayMenu.Rename "1&", szSize
+        A_TrayMenu.Rename "2&", szNumItems
+        
+        if i64NumItems
+        {
+            A_TrayMenu.Enable NativeLanguage.szEmptyRecycleBin
+            
+            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+            {
+                try
+                {
+                    A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+                                      ,A_LoopField "\recyclerfull.ico"
+                    bCustomIcon := true
+                    break
+                }
+            }
+            
+            if !bCustomIcon
+                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+                                  ,"imageres"
+                                  ,ICON_RECYCLER_FULL
+        }
+        else
+        {
+            A_TrayMenu.Disable NativeLanguage.szEmptyRecycleBin
+            
+            Loop Parse LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+            {
+                try
+                {
+                    A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+                                      ,A_LoopField "\recycler.ico"
+                    bCustomIcon := true
+                    break
+                }
+            }
+            
+            if !bCustomIcon
+                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin
+                                  ,"imageres"
+                                  ,ICON_RECYCLER
+        }
+    }
 }
 
-EmptyRecycleBin()
+IsWindows8Point1OrGreater()
 {
-    try SHEmptyRecycleBin(NULL, NONE, 0)
+    szKey := "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    
+    return VerCompare(RegRead(szKey, "CurrentVersion", "0.0"), ">=6.3")
 }
 
-OpenRecycleBin()
+On_AHK_NOTIFYICON(wParam, lParam, *)
 {
-    try Run "shell:RecycleBinFolder"
+    switch lParam
+    {
+        case WM_LBUTTONUP, WM_RBUTTONUP:
+            A_TrayMenu.Show
+            
+        case WM_MBUTTONUP:
+            RecycleBin.Open
+    }
+        
+    return 0
+}
+
+On_WM_INITMENUPOPUP(*)
+{
+    TrayMenu.UpdateMenu
+    
+    return 0
+}
+
+Quit()
+{
+    if GetKeyState("Ctrl")
+        Reload
+    else
+        ExitApp
 }
 
 RunAsInteractiveUser()
 {
     if A_IsAdmin
-    {
-        try WdcRunTaskAsInteractiveUser(A_ScriptFullPath, A_ScriptDir)
+        try WdcRunTaskAsInteractiveUser GetCommandLine(), A_ScriptDir
         
-        ExitApp A_LastError
-    }
+    return !A_IsAdmin
 }
 
-UpdateIcon(shqrbi)
-{
-    static i64PrevSize := -1
-          ,i64PrevNumItems := -1
-    
-    try
-        SHQueryRecycleBin(NONE, shqrbi)
-    catch
-    {
-        ;// Never should occur.
-        A_IconTip := MUI.szError
-        TraySetIcon "imageres", IMAGERES_RECYCLER_ERROR
-        return
-    }
-    
-    i64Size := shqrbi.i64Size
-    i64NumItems := shqrbi.i64NumItems
-    
-    if i64Size = i64PrevSize && i64NumItems = i64PrevNumItems
-        ;// No change.
-        return
-    
-    i64PrevSize := i64Size
-    i64PrevNumItems := i64NumItems
-    
-    try
-        szSize := StrFormatByteSize(i64Size)
-    catch
-        ;// Never should occur.
-        szSize := MUI.szError
-        
-    szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
-                            ,"%s"
-                            ,i64NumItems)
-    
-    A_IconTip := szNumItems "`n" szSize
-    
-    TraySetIcon "imageres", i64NumItems
-                          ? IMAGERES_RECYCLER_FULL
-                          : IMAGERES_RECYCLER
-}
-
-UpdateMenu(shqrbi, *)
-{
-    static i64PrevSize := -1
-          ,i64PrevNumItems := -1
-    
-    if RunAtStartup.Enabled()
-        A_TrayMenu.Check MUI.szStartup
-    else
-        A_TrayMenu.Uncheck MUI.szStartup
-    
-    try
-        SHQueryRecycleBin(NONE, shqrbi)
-    catch
-    {
-        ;// Never should occur.
-        A_TrayMenu.Rename "1&", MUI.szError
-        A_TrayMenu.Rename "2&", MUI.szError
-        A_TrayMenu.Enable MUI.szEmptyRecycleBin 
-        A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
-                          ,"imageres"
-                          ,IMAGERES_RECYCLER_ERROR
-        return
-    }
-    
-    i64Size := shqrbi.i64Size
-    i64NumItems := shqrbi.i64NumItems
-    
-    if i64Size = i64PrevSize && i64NumItems = i64PrevNumItems
-        ;// No change.
-        return
-    
-    i64PrevSize := i64Size
-    i64PrevNumItems := i64NumItems
-    
-    try
-        szSize := StrFormatByteSize(i64Size)
-    catch
-        ;// Never should occur.
-        szSize := MUI.szError
-        
-    szNumItems := StrReplace(i64NumItems = 1 ? MUI.szItem : MUI.szItems
-                            ,"%s"
-                            ,i64NumItems)
-    
-    A_TrayMenu.Rename "1&", szNumItems
-    A_TrayMenu.Rename "2&", szSize
-    
-    if i64NumItems
-    {
-        A_TrayMenu.Enable MUI.szEmptyRecycleBin
-        A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
-                          ,"imageres"
-                          ,IMAGERES_RECYCLER_FULL
-    }
-    else
-    {
-        A_TrayMenu.Disable MUI.szEmptyRecycleBin
-        A_TrayMenu.SetIcon MUI.szEmptyRecycleBin
-                          ,"imageres"
-                          ,IMAGERES_RECYCLER
-    }
-}
-
-;===============================================================================
-;                                 WinApi
-;===============================================================================
+;//=============================================================================
+;//                                  WinApi
+;//=============================================================================
 
 WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 {
-    ;// Not documented?
-    
-    if HRESULT := DllCall("wdc\WdcRunTaskAsInteractiveUser"
-                         ,pwszCmdLine is Integer ? "Ptr" : "WStr", pwszCmdLine
-                         ,pwszPath is Integer ? "Ptr" : "WStr", pwszPath
-                         ,"UInt", 0
-                         ,"Int")
-        
-        throw OSError(HRESULT, A_ThisFunc)
-    
-    return HRESULT
+    return DllCall("wdc\WdcRunTaskAsInteractiveUser"
+                  ,"WStr", pwszCmdLine
+                  ,"WStr", pwszPath
+                  ,"UInt", 0
+                  ,"HRESULT")
 }
 
 #Include WinApi\libloaderapi\FreeLibrary.ahk
 #Include WinApi\libloaderapi\LoadLibrary.ahk
+#Include WinApi\processenv\GetCommandLine.ahk
 #Include WinApi\shellapi\SHEmptyRecycleBin.ahk
 #Include WinApi\shellapi\SHQUERYRBINFO.ahk
 #Include WinApi\shellapi\SHQueryRecycleBin.ahk
