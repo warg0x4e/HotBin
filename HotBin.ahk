@@ -422,7 +422,7 @@ On_AHK_NOTIFYICON(wParam, lParam, *)
             A_TrayMenu.Show
             
         case WM_MBUTTONUP:
-            RecycleBin.Open
+            TrayMenu.Open
     }
         
     return 0
