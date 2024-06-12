@@ -37,7 +37,6 @@ ERROR_NOT_SUPPORTED := 0x32
 
 ;// winnls.h
 LOCALE_IREADINGLAYOUT := 0x70
-LOCALE_NAME_USER_DEFAULT := NULL
 
 ;// winuser.h
 WM_INITMENUPOPUP := 0x117
@@ -64,14 +63,11 @@ Main()
         
     try DirCreate LOCALAPPDATA "\HotBin"
     
-    try
-        TrayMenu.Load
-    catch OSError as Err
-        ExitApp Err.Number
+    TrayMenu.Load
     
     NativeLanguage.DeleteProp "bRTL"
     NativeLanguage.DeleteProp "szClose"
-        
+    
     ProcessSetPriority "Low"
 }
 
@@ -173,7 +169,12 @@ class RunAtUserLogon
     
     static Update(*)
     {
-        try RegWrite GetCommandLine()
+        if A_IsCompiled
+            szCmdLine := '"' A_ScriptFullPath '"'
+        else
+            szCmdLine := '"' A_AhkPath '" "' A_ScriptFullPath '"'
+        
+        try RegWrite szCmdLine
                     ,"REG_SZ"
                     ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
                     ,"HotBin"
@@ -445,8 +446,15 @@ Close()
 RunAsInteractiveUser()
 {
     if A_IsAdmin
-        try WdcRunTaskAsInteractiveUser GetCommandLine(), A_ScriptDir
+    {
+        if A_IsCompiled
+            szCmdLine := '"' A_ScriptFullPath '"'
+        else
+            szCmdLine := '"' A_AhkPath '" "' A_ScriptFullPath '"'
         
+        try WdcRunTaskAsInteractiveUser szCmdLine, A_ScriptDir
+    }
+    
     return !A_IsAdmin
 }
 
@@ -465,7 +473,6 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 
 #Include WinApi\libloaderapi\FreeLibrary.ahk
 #Include WinApi\libloaderapi\LoadLibrary.ahk
-#Include WinApi\processenv\GetCommandLine.ahk
 #Include WinApi\shellapi\SHEmptyRecycleBin.ahk
 #Include WinApi\shellapi\SHQUERYRBINFO.ahk
 #Include WinApi\shellapi\SHQueryRecycleBin.ahk
