@@ -1,10 +1,10 @@
-#define AppVersion "2.9.0.0"
+#define AppVersion "2.9.1.0"
 
 [Setup]
 AppComments=Easily access the Recycle Bin from the System Tray.
 AppContact=https://github.com/warg0x4e/HotBin/issues
 AppId={{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}
-AppMutex=Local\{{9271AC2E-FC8B-489F-8F44-4D41A12E7C04},Global\{{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}
+AppMutex={{9271AC2E-FC8B-489F-8F44-4D41A12E7C04},Global\{{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}
 AppName=HotBin
 AppPublisher=warg0x4e
 AppPublisherURL=https://github.com/warg0x4e/HotBin
@@ -17,7 +17,7 @@ DefaultGroupName=HotBin
 MinVersion=6.3
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
-SetupMutex=Local\{{2273C7A2-14E1-4E90-9BAA-58C1C7A14DFA},Global\{{2273C7A2-14E1-4E90-9BAA-58C1C7A14DFA}
+SetupMutex={{2273C7A2-14E1-4E90-9BAA-58C1C7A14DFA},Global\{{2273C7A2-14E1-4E90-9BAA-58C1C7A14DFA}
 UninstallDisplayIcon={app}\HotBin.exe,0
 UninstallDisplayName=HotBin
 AppCopyright=The Unlicense
@@ -29,8 +29,8 @@ SourceDir=.
 VersionInfoVersion={#AppVersion}
 
 [Files]
-Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
-Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
+Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion; BeforeInstall: TaskKill()
+Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion; BeforeInstall: TaskKill()
 Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Languages]
@@ -69,4 +69,3 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupA
 
 [Run]
 Filename: "{app}\HotBin.exe"; Flags: nowait postinstall skipifsilent
-
