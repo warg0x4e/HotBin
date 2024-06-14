@@ -8,6 +8,7 @@
 
 #Requires AutoHotkey v2.0+
 
+#NoTrayIcon
 #SingleInstance Off
 #Warn All, Off
 
@@ -317,7 +318,10 @@ class TrayMenu
         OnMessage AHK_NOTIFYICON, ObjBindMethod(this, "On_AHK_NOTIFYICON")
         OnMessage WM_INITMENUPOPUP, ObjBindMethod(this, "On_WM_INITMENUPOPUP")
         
+        this.UpdateIcon
         SetTimer ObjBindMethod(this, "UpdateIcon"), 500
+        
+        A_IconHidden := false
         
         this.DeleteProp "Load"
     }
