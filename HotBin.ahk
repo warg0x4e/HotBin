@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.9.2.0
+;@Ahk2Exe-Let AppVersion = 2.9.3.0
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -337,11 +337,35 @@ class TrayMenu
     
     static On_AHK_NOTIFYICON(wParam, lParam, *)
     {
+        static bDoubleClicked := false
+        
+        MouseGetPos &uCoordX, &uCoordY
+        
         switch lParam
         {
-            case WM_LBUTTONUP, WM_RBUTTONUP:
-                A_TrayMenu.Show
-                
+            case WM_LBUTTONUP:
+            {
+                if KeyWait("LButton", "DT" GetDoubleClickTime() / 1000)
+                {
+                    bDoubleClicked := true
+                    
+                    try
+                        pSHQueryRBInfoEx := RecycleBin.Query()
+                    catch
+                        return 0
+                        
+                    if pSHQueryRBInfoEx.i64NumItems
+                        RecycleBin.Empty
+                }
+                else if bDoubleClicked
+                    bDoubleClicked := false
+                else
+                    A_TrayMenu.Show uCoordX, uCoordY
+            }
+            
+            case WM_RBUTTONUP:
+                    A_TrayMenu.Show uCoordX, uCoordY
+            
             case WM_MBUTTONUP:
                 RecycleBin.Open
         }
@@ -561,4 +585,5 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 #Include WinApi\winnls\GetLocaleInfoEx.ahk
 #Include WinApi\winnt\OSVERSIONINFOEX.ahk
 #Include WinApi\winnt\VerSetConditionMask.ahk
+#Include WinApi\winuser\GetDoubleClickTime.ahk
 #Include WinApi\winuser\LoadString.ahk
