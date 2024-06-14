@@ -17,7 +17,7 @@ GetLocaleInfoEx(lpLocaleName, LCType)
                           ,lpLocaleName is Integer ? "Ptr" : "WStr", lpLocaleName
                           ,"UInt", LCType
                           ,"Ptr", lpLCData := Buffer(cchData << 1, 0)
-                          ,"Int", lpLCData.Size >> 1
+                          ,"Int", cchData
                           ,"Int")
         
         throw Error(cchData, A_ThisFunc)

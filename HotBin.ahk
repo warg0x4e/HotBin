@@ -1,4 +1,4 @@
-;@Ahk2Exe-Let AppVersion = 2.9.1.0
+;@Ahk2Exe-Let AppVersion = 2.9.2.0
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -36,7 +36,7 @@ SIID_RECYCLER := 0x1F
 SIID_RECYCLERFULL := 0x20
 
 ;// shlobj_core.h
-KF_FLAG_DONT_VERIFY := 0x00004000
+KF_FLAG_DONT_VERIFY := 0x4000
 
 ;// winerror.h
 ERROR_NOT_SUPPORTED := 0x32
@@ -45,6 +45,12 @@ ERROR_NOT_SUPPORTED := 0x32
 LOCALE_NAME_USER_DEFAULT := NULL
 LOCALE_IREADINGLAYOUT := 0x70
 
+;// winnt.h
+VER_GREATER_EQUAL := 3
+VER_MAJORVERSION := 0x2
+VER_MINORVERSION := 0x1
+VER_SERVICEPACKMAJOR := 0x20
+    
 ;// winuser.h
 WM_INITMENUPOPUP := 0x117
 WM_LBUTTONUP := 0x202
@@ -73,9 +79,6 @@ Main()
     try DirCreate LOCALAPPDATA "\HotBin"
     
     TrayMenu.Load
-    
-    NativeLanguage.DeleteProp "bRTL"
-    NativeLanguage.DeleteProp "szClose"
     
     ProcessSetPriority "Low"
 }
@@ -307,6 +310,9 @@ class TrayMenu
         A_TrayMenu.Add NativeLanguage.szClose, (*) => this.Close()
         
         WinSetExStyle NativeLanguage.bRTL ? +WS_EX_LAYOUTRTL : -WS_EX_LAYOUTRTL, A_ScriptHwnd
+    
+        NativeLanguage.DeleteProp "bRTL"
+        NativeLanguage.DeleteProp "szClose"
         
         OnMessage AHK_NOTIFYICON, ObjBindMethod(this, "On_AHK_NOTIFYICON")
         OnMessage WM_INITMENUPOPUP, ObjBindMethod(this, "On_WM_INITMENUPOPUP")
@@ -350,31 +356,48 @@ class TrayMenu
         return 0
     }
     
-    static SetCustomIcon(szIcon)
+    static SetCustomMenuItemIcon(szMenuItem, szIcon)
     {
         try
         {
-            szIconPath := LOCALAPPDATA "\HotBin\" szIcon
-            TraySetIcon szIcon
-            A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin, szIconPath
+            A_TrayMenu.SetIcon szMenuItem, LOCALAPPDATA "\HotBin\" szIcon
             return true
         }
         
         try
         {
-            szIconPath := A_ScriptDir "\" szIcon
-            TraySetIcon szIcon
-            A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin, szIconPath
+            A_TrayMenu.SetIcon szMenuItem, szIcon
             return true
         }
         
         return false
     }
     
-    static SetIcon(hIcon)
+    static SetCustomTrayIcon(szIcon)
+    {
+        try
+        {
+            TraySetIcon LOCALAPPDATA "\HotBin\" szIcon
+            return true
+        }
+        
+        try
+        {
+            TraySetIcon szIcon
+            return true
+        }
+        
+        return false
+    }
+    
+    static SetStockMenuItemIcon(szMenuItem, hIcon)
+    {
+        A_TrayMenu.SetIcon szMenuItem, "HICON:*" hIcon
+    }
+    
+    static SetStockTrayIcon(hIcon)
     {
         TraySetIcon "HICON:*" hIcon
-        A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin, "HICON:*" hIcon
     }
     
     static UpdateIcon()
@@ -388,8 +411,8 @@ class TrayMenu
         {
             A_IconTip := NativeLanguage.szError
             
-            if !this.SetCustomIcon("error.ico")
-                this.SetIcon this.hIconError
+            if !this.SetCustomTrayIcon("error.ico")
+                TraySetIcon "HICON:*" this.hIconError
                 
             return
         }
@@ -408,13 +431,13 @@ class TrayMenu
         
         if i64NumItems
         {
-            if !this.SetCustomIcon("full.ico")
-                this.SetIcon this.hIconRecyclerFull
+            if !this.SetCustomTrayIcon("full.ico")
+                TraySetIcon "HICON:*" this.hIconRecyclerFull
         }
         else
         {
-            if !this.SetCustomIcon("empty.ico")
-                this.SetIcon this.hIconRecycler
+            if !this.SetCustomTrayIcon("empty.ico")
+                TraySetIcon "HICON:*" this.hIconRecycler
         }
     }
     
@@ -441,8 +464,8 @@ class TrayMenu
             A_TrayMenu.Rename "1&", NativeLanguage.szError
             A_TrayMenu.Rename "2&", NativeLanguage.szError
             
-            if !this.SetCustomIcon("error.ico")
-                this.SetIcon this.hIconError
+            if !this.SetCustomMenuItemIcon(NativeLanguage.szEmptyRecycleBin, "error.ico")
+                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin, "HICON:*" this.hIconError
                 
             return
         }
@@ -464,25 +487,37 @@ class TrayMenu
         {
             A_TrayMenu.Enable NativeLanguage.szEmptyRecycleBin
             
-            if !this.SetCustomIcon("full.ico")
-                this.SetIcon this.hIconRecyclerFull
+            if !this.SetCustomMenuItemIcon(NativeLanguage.szEmptyRecycleBin, "full.ico")
+                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin, "HICON:*" this.hIconRecyclerFull
         }
         else
         {
             A_TrayMenu.Disable NativeLanguage.szEmptyRecycleBin
             
-            if !this.SetCustomIcon("empty.ico")
-                this.SetIcon this.hIconRecycler
+            if !this.SetCustomMenuItemIcon(NativeLanguage.szEmptyRecycleBin, "empty.ico")
+                A_TrayMenu.SetIcon NativeLanguage.szEmptyRecycleBin, "HICON:*" this.hIconRecycler
         }
     }
 }
 
-
 IsWindows8OrGreater()
 {
-    szKey := "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    dwlConditionMask := VerSetConditionMask(0
+                                           ,VER_MAJORVERSION
+                                           ,VER_GREATER_EQUAL)
     
-    return VerCompare(RegRead(szKey, "CurrentVersion", "0.0"), ">=6.2")
+    dwlConditionMask := VerSetConditionMask(dwlConditionMask
+                                           ,VER_MINORVERSION
+                                           ,VER_GREATER_EQUAL)
+    
+    pOSVersionInfoEx := OSVERSIONINFOEX()
+    
+    pOSVersionInfoEx.dwMajorVersion := 6
+    pOSVersionInfoEx.dwMinorVersion := 2
+    
+    return VerifyVersionInfo(pOSVersionInfoEx
+                            ,VER_MAJORVERSION | VER_MINORVERSION
+                            ,dwlConditionMask)
 }
 
 RunAsInteractiveUser()
@@ -510,6 +545,7 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 }
 
 #Include WinApi\combaseapi\CLSIDFromString.ahk
+#Include WinApi\combaseapi\CoTaskMemFree.ahk
 #Include WinApi\guiddef\GUID.ahk
 #Include WinApi\libloaderapi\FreeLibrary.ahk
 #Include WinApi\libloaderapi\LoadLibrary.ahk
@@ -521,5 +557,8 @@ WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 #Include WinApi\shlobj_core\SHGetKnownFolderPath.ahk
 #Include WinApi\shlwapi\StrFormatByteSize.ahk
 #Include WinApi\synchapi\CreateMutex.ahk
+#Include WinApi\winbase\VerifyVersionInfo.ahk
 #Include WinApi\winnls\GetLocaleInfoEx.ahk
+#Include WinApi\winnt\OSVERSIONINFOEX.ahk
+#Include WinApi\winnt\VerSetConditionMask.ahk
 #Include WinApi\winuser\LoadString.ahk

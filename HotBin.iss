@@ -1,4 +1,4 @@
-#define AppVersion "2.9.1.0"
+#define AppVersion "2.9.2.0"
 
 [Setup]
 AppComments=Easily access the Recycle Bin from the System Tray.
@@ -29,8 +29,8 @@ SourceDir=.
 VersionInfoVersion={#AppVersion}
 
 [Files]
-Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion; BeforeInstall: TaskKill()
-Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion; BeforeInstall: TaskKill()
+Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
+Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Languages]

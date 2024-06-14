@@ -9,3 +9,6 @@ SHQueryRecycleBin(pszRootPath, pSHQueryRBInfo)
                   ,"Ptr", pSHQueryRBInfo
                   ,"HRESULT")
 }
+
+#Include %A_ScriptDir%
+#Include WinApi\shellapi\SHQUERYRBINFO.ahk

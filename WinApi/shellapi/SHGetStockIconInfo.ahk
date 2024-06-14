@@ -10,3 +10,6 @@ SHGetStockIconInfo(siid, uFlags, psii)
                   ,"Ptr", psii
                   ,"HRESULT")
 }
+
+#Include %A_ScriptDir%
+#Include WinApi\shellapi\SHSTOCKICONINFO.ahk

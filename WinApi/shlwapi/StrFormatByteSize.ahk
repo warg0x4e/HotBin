@@ -6,8 +6,8 @@ StrFormatByteSize(qdw)
     
     if PWSTR := DllCall("shlwapi\StrFormatByteSizeW"
                        ,"Int64", qdw
-                       ,"Ptr", pszBuf := Buffer(520, 0)
-                       ,"UInt", pszBuf.Size >> 1
+                       ,"Ptr", pszBuf := Buffer((MAX_PATH := 260) << 1, 0)
+                       ,"UInt", MAX_PATH
                        ,"WStr")
         
         return PWSTR

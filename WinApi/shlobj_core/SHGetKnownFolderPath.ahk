@@ -18,7 +18,8 @@ SHGetKnownFolderPath(rfid, dwFlags, hToken)
     catch Any as Err
         throw Err
     finally
-        DllCall("ole32\CoTaskMemFree"
-               ,"Ptr", ppszPath
-               ,"Ptr")
+        CoTaskMemFree(ppszPath)
 }
+
+#Include %A_ScriptDir%
+#Include WinApi\combaseapi\CoTaskMemFree.ahk
