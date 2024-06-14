@@ -418,11 +418,6 @@ class TrayMenu
         return false
     }
     
-    static SetStockMenuItemIcon(szMenuItem, hIcon)
-    {
-        A_TrayMenu.SetIcon szMenuItem, "HICON:*" hIcon
-    }
-    
     static SetStockTrayIcon(hIcon)
     {
         TraySetIcon "HICON:*" hIcon
