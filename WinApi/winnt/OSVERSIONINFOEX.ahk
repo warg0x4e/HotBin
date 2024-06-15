@@ -2,7 +2,7 @@
 
 class OSVERSIONINFOEX extends Buffer
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfow
+    ;// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw
     
     dwMajorVersion
     {
