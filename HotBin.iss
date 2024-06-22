@@ -1,4 +1,4 @@
-#define AppVersion "2.9.3.0"
+#define AppVersion "2.10.0.0"
 
 [Setup]
 AppComments=Easily access the Recycle Bin from the System Tray.
@@ -15,7 +15,7 @@ ArchitecturesInstallIn64BitMode=x64
 CloseApplications=force
 DefaultDirName={autopf}\HotBin
 DefaultGroupName=HotBin
-MinVersion=6.3
+MinVersion=6.2
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
 SetupMutex={{2273C7A2-14E1-4E90-9BAA-58C1C7A14DFA},Global\{{2273C7A2-14E1-4E90-9BAA-58C1C7A14DFA}
@@ -33,6 +33,7 @@ VersionInfoVersion={#AppVersion}
 Source: "HotBin-{#AppVersion}-x64.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: Is64BitInstallMode; Flags: ignoreversion
 Source: "HotBin-{#AppVersion}-x86.exe"; DestDir: "{app}"; DestName: "HotBin.exe"; Check: not Is64BitInstallMode; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+Source: "LICENSE.AutoHotkey"; DestDir: "{app}"; DestName: "LICENSE.AutoHotkey.txt"; Flags: ignoreversion
 
 [Languages]
 Name: "Default"; MessagesFile: "compiler:Default.isl"
