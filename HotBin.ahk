@@ -85,8 +85,6 @@ Main()
         clsid := CLSIDFromString("{F1B32785-6FBA-4FCF-9D55-7B8E7F157091}", Buffer(16, NULL))
         
         LOCALAPPDATA := SHGetKnownFolderPath(clsid, KF_FLAG_DONT_VERIFY, NULL)
-        
-        DirCreate LOCALAPPDATA "\HotBin"
     }
     catch OSError as err
     {
@@ -94,6 +92,12 @@ Main()
         
         LOCALAPPDATA := NULL
     }
+    
+    if LOCALAPPDATA
+        try
+            DirCreate LOCALAPPDATA "\HotBin"
+        catch
+            LogError err
     
     TrayMenu.Load
     
