@@ -58,8 +58,9 @@ CMD_LINE := A_IsCompiled
            ? '"' A_ScriptFullPath '"'
            : '"' A_AhkPath '" "' A_ScriptFullPath '"'
 
-ICON_RECYCLER := "empty.ico"
-ICON_RECYCLERFULL := "full.ico"
+ICON_EXT := "GIF|ICO|ODD|PNG|TIFF"
+ICON_RECYCLER := "empty"
+ICON_RECYCLERFULL := "full"
 
 LOCALAPPDATA := NULL
 
@@ -307,47 +308,61 @@ class TrayMenu
         shsii := SHSTOCKICONINFO()
         dwFlags := SHGSI_ICON | SHGSI_SMALLICON
         
-        Loop Parse, LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+        Loop Parse, LOCALAPPDATA "\HotBin" "|" A_ScriptDir, "|"
         {
-            hIcon := NULL
-            szIcon := A_LoopField "\" ICON_RECYCLER
-            
-            if !this.hIconRecycler && FileExist(szIcon)
-            {
-                hIcon := LoadPicture(szIcon, "Icon1", &uType)
+            if !DirExist(A_LoopField)
+                continue
                 
-                try
-                {
-                    TraySetIcon "HICON:*" hIcon
-                    
-                    this.hIconRecycler := hIcon
-                }
-                catch
-                {
-                    LogError OSError(ERROR_INVALID_DATA)
-                    
-                    try DestroyIcon(hIcon)
-                }
-            }
+            szDir := A_LoopField
             
-            hIcon := NULL
-            szIcon := A_LoopField "\" ICON_RECYCLERFULL
-            
-            if !this.hIconRecyclerFull && FileExist(szIcon)
+            Loop Parse, ICON_EXT, "|"
             {
-                hIcon := LoadPicture(szIcon, "Icon1", &uType)
+                szIconRecycler := szDir "\" ICON_RECYCLER "." A_LoopField
                 
-                try
+                if !this.hIconRecycler && FileExist(szIconRecycler)
                 {
-                    TraySetIcon "HICON:*" hIcon
+                    hIconRecycler := LoadPicture(szIconRecycler, "Icon1", &uType)
                     
-                    this.hIconRecyclerFull := hIcon
+                    try
+                    {
+                        TraySetIcon "HICON:*" hIconRecycler
+                        
+                        this.hIconRecycler := hIconRecycler
+                    }
+                    catch
+                    {
+                        LogError OSError(ERROR_INVALID_DATA)
+                        
+                        if hIconRecycler
+                            try
+                                DestroyIcon(hIconRecycler)
+                            catch OSError as err
+                                LogError(err)
+                    }
                 }
-                catch
+                
+                szIconRecyclerFull := szDir "\" ICON_RECYCLERFULL "." A_LoopField
+                
+                if !this.hIconRecyclerFull && FileExist(szIconRecyclerFull)
                 {
-                    LogError OSError(ERROR_INVALID_DATA)
+                    hIconRecyclerFull := LoadPicture(szIconRecyclerFull, "Icon1", &uType)
                     
-                    try DestroyIcon(hIcon)
+                    try
+                    {
+                        TraySetIcon "HICON:*" hIconRecyclerFull
+                        
+                        this.hIconRecyclerFull := hIconRecyclerFull
+                    }
+                    catch
+                    {
+                        LogError OSError(ERROR_INVALID_DATA)
+                        
+                        if hIconRecyclerFull
+                            try
+                                DestroyIcon(hIconRecyclerFull)
+                            catch OSError as err
+                                LogError(err)
+                    }
                 }
             }
         }
@@ -359,13 +374,13 @@ class TrayMenu
             catch OSError as err
                 ExitApp LogError(err)
             
-            hIcon := shsii.hIcon
+            hIconRecycler := shsii.hIcon
             
             try
             {
-                TraySetIcon "HICON:*" hIcon
+                TraySetIcon "HICON:*" hIconRecycler
                 
-                this.hIconRecycler := hIcon
+                this.hIconRecycler := hIconRecycler
             }
             catch
                 ExitApp LogError(OSError(ERROR_INVALID_DATA))
@@ -378,13 +393,13 @@ class TrayMenu
             catch OSError as err
                 ExitApp LogError(err)
             
-            hIcon := shsii.hIcon
+            hIconRecyclerFull := shsii.hIcon
             
             try
             {
-                TraySetIcon "HICON:*" hIcon
+                TraySetIcon "HICON:*" hIconRecyclerFull
                 
-                this.hIconRecyclerFull := hIcon
+                this.hIconRecyclerFull := hIconRecyclerFull
             }
             catch
                 ExitApp LogError(OSError(ERROR_INVALID_DATA))
