@@ -19,10 +19,6 @@ Persistent
 InstallKeybdHook false
 InstallMouseHook false
 
-APP_ID := "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}"
-APP_NAME := "HotBin"
-APP_SUPPORT_URL := "https://github.com/warg0x4e/HotBin/issues"
-
 NONE := ""
 NULL := 0
 
@@ -70,33 +66,32 @@ LOCALAPPDATA := NULL
 Main()
 Main()
 {
+    if !IsWindows8OrGreater()
+        ExitApp LogError(OSError(ERROR_OLD_WIN_VERSION))
+        
+    if !RunAsInteractiveUser()
+        ExitApp LogError(OSError(ERROR_NOT_SUPPORTED))
+        
+    try CreateMutex NULL, false, "{9271AC2E-FC8B-489F-8F44-4D41A12E7C04}"
+    
+    if dwError := A_LastError
+        ExitApp LogError(OSError(A_LastError))
+        
+    global LOCALAPPDATA
+    
     try
     {
-        if !IsWindows8OrGreater()
-            throw OSError(ERROR_OLD_WIN_VERSION)
-            
-        if !RunAsInteractiveUser()
-            throw OSError(ERROR_NOT_SUPPORTED)
-            
-        CreateMutex NULL, false, APP_ID
+        clsid := CLSIDFromString("{F1B32785-6FBA-4FCF-9D55-7B8E7F157091}", Buffer(16, NULL))
         
-        if dwError := A_LastError
-            throw OSError(dwError)
-    }
-    catch OSError as err
-        ExitApp LogError(err)
+        LOCALAPPDATA := SHGetKnownFolderPath(clsid, KF_FLAG_DONT_VERIFY, NULL)
         
-    try
-    {
-        pclsid := CLSIDFromString("{F1B32785-6FBA-4FCF-9D55-7B8E7F157091}", Buffer(16, NULL))
-        
-        global LOCALAPPDATA := SHGetKnownFolderPath(pclsid, KF_FLAG_DONT_VERIFY, NULL)
+        DirCreate LOCALAPPDATA "\HotBin"
     }
     catch OSError as err
     {
         LogError err
         
-        global LOCALAPPDATA := NULL
+        LOCALAPPDATA := NULL
     }
     
     TrayMenu.Load
@@ -167,19 +162,17 @@ class RecycleBin
 {
     static Empty()
     {
-        if !this.Query().i64NumItems
-            return ERROR_SUCCESS
+        if this.Query().i64NumItems
+        {
+            dwFlags := ShowRecycleConfirmation.IsDisabled() || GetKeyState("Ctrl")
+                       ? SHERB_NOCONFIRMATION
+                       : NULL
             
-        dwFlags := ShowRecycleConfirmation.IsDisabled() || GetKeyState("Ctrl")
-                   ? SHERB_NOCONFIRMATION
-                   : NULL
-        
-        try
-            SHEmptyRecycleBin NULL, NONE, dwFlags
-        catch OSError as err
-            ExitApp LogError(err)
-            
-        return ERROR_SUCCESS
+            try
+                SHEmptyRecycleBin NULL, NONE, dwFlags
+            catch OSError as err
+                ExitApp LogError(err)
+        }
     }
     
     static Open()
@@ -188,8 +181,6 @@ class RecycleBin
             Run "shell:RecycleBinFolder"
         catch
             ExitApp LogError(OSError(A_LastError))
-            
-        return ERROR_SUCCESS
     }
     
     static Query()
@@ -207,6 +198,9 @@ class RecycleBin
 
 class RunAtUserLogon
 {
+    static szRegKeyApprovedRun := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
+          ,szRegKeyRun := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+          
     static Load()
     {
         if !this.IsEnabled()
@@ -219,35 +213,17 @@ class RunAtUserLogon
     {
         try
         {
-            RegWrite "030000"
-                    ,"REG_BINARY"
-                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
-                    ,APP_NAME
-            
-            RegWrite CMD_LINE
-                    ,"REG_SZ"
-                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                    ,APP_NAME
+            RegWrite "030000", "REG_BINARY", this.szRegKeyApprovedRun, "HotBin"
+            RegWrite CMD_LINE, "REG_SZ", this.szRegKeyRun, "HotBin"
         }
         catch OSError as err
-        {
             LogError err
-            
-            return err.Number
-        }
-        
-        return ERROR_SUCCESS
     }
     
     static IsDisabled()
     {
-        szApproved := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
-                             ,APP_NAME
-                             ,"02")
-        
-        szCmdLine := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                            ,APP_NAME
-                            ,NONE)
+        szApproved := RegRead(this.szRegKeyApprovedRun, "HotBin", "02")
+        szCmdLine := RegRead(this.szRegKeyRun, "HotBin", NONE)
         
         return Mod(SubStr(szApproved, 2, 1), 2) == 1 || szCmdLine != CMD_LINE
     }
@@ -256,35 +232,17 @@ class RunAtUserLogon
     {
         try
         {
-            RegWrite "020000"
-                    ,"REG_BINARY"
-                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
-                    ,APP_NAME
-            
-            RegWrite CMD_LINE
-                    ,"REG_SZ"
-                    ,"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                    ,APP_NAME
+            RegWrite "020000", "REG_BINARY", this.szRegKeyApprovedRun, "HotBin"
+            RegWrite CMD_LINE, "REG_SZ", this.szRegKeyRun, "HotBin"
         }
         catch OSError as err
-        {
             LogError err
-            
-            return err.Number
-        }
-        
-        return ERROR_SUCCESS
     }
     
     static IsEnabled()
     {
-        szApproved := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
-                             ,APP_NAME
-                             ,"02")
-        
-        szCmdLine := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                            ,APP_NAME
-                            ,NONE)
+        szApproved := RegRead(this.szRegKeyApprovedRun, "HotBin", "02")
+        szCmdLine := RegRead(this.szRegKeyRun, "HotBin", NONE)
         
         return Mod(SubStr(szApproved, 2, 1), 2) == 0 && szCmdLine == CMD_LINE
     }
@@ -300,52 +258,32 @@ class RunAtUserLogon
 
 class ShowRecycleConfirmation
 {
+    static szRegKeyApp := "HKCU\SOFTWARE\HotBin"
+    
     static Disable()
     {
         try
-            RegWrite 0
-                    ,"REG_DWORD"
-                    ,"HKCU\SOFTWARE\HotBin"
-                    ,"ShowRecycleConfirmation"
+            RegWrite 0, "REG_DWORD", this.szRegKeyApp, this.prototype.__Class
         catch OSError as err
-        {
             LogError err
-            
-            return err.Number
-        }
-        
-        return ERROR_SUCCESS
     }
     
     static IsDisabled()
     {
-        return RegRead("HKCU\SOFTWARE\HotBin"
-                      ,"ShowRecycleConfirmation"
-                      ,1) == 0
+        return RegRead(this.szRegKeyApp, this.prototype.__Class, 1) == 0
     }
     
     static Enable()
     {
         try
-            RegWrite 1
-                    ,"REG_DWORD"
-                    ,"HKCU\SOFTWARE\HotBin"
-                    ,"ShowRecycleConfirmation"
+            RegWrite 1, "REG_DWORD", this.szRegKeyApp, this.prototype.__Class
         catch OSError as err
-        {
             LogError err
-            
-            return err.Number
-        }
-        
-        return ERROR_SUCCESS
     }
     
     static IsEnabled()
     {
-        return RegRead("HKCU\SOFTWARE\HotBin"
-                      ,"ShowRecycleConfirmation"
-                      ,1) != 0
+        return RegRead(this.szRegKeyApp, this.prototype.__Class, 1) != 0
     }
     
     static Toggle()
@@ -369,7 +307,7 @@ class TrayMenu
         shsii := SHSTOCKICONINFO()
         dwFlags := SHGSI_ICON | SHGSI_SMALLICON
         
-        Loop Parse, LOCALAPPDATA "\" APP_NAME "|" A_ScriptDir, "|"
+        Loop Parse, LOCALAPPDATA "\HotBin" "|" A_ScriptDir, "|"
         {
             hIcon := NULL
             szIcon := A_LoopField "\" ICON_RECYCLER
@@ -463,11 +401,6 @@ class TrayMenu
         szRunAtUserLogon := NativeLanguage.szRunAtUserLogon
         szShowRecycleConfirmation := NativeLanguage.szShowRecycleConfirmation
         
-        NativeLanguage.DeleteProp "bRTL"
-        NativeLanguage.DeleteProp "szClose"
-        NativeLanguage.DeleteProp "szHelp"
-        NativeLanguage.DeleteProp "szOpen"
-        
         A_TrayMenu.Delete
         
         A_TrayMenu.Add "1", (*) => NULL
@@ -485,21 +418,23 @@ class TrayMenu
         
         A_TrayMenu.Add ;// Separator.
         
-        A_TrayMenu.Add szHelp, (*) => Run(APP_SUPPORT_URL)
+        A_TrayMenu.Add szHelp, (*) => Run("https://github.com/warg0x4e/HotBin/issues")
         A_TrayMenu.Add szClose, (*) => GetKeyState("Ctrl")
                                        ? Reload()
                                        : ExitApp()
+        
+        /* If the shell language is Hebrew, Arabic, or another language that
+         * supports reading order alignment, the horizontal origin of the
+         * window is on the right edge.
+         */
         
         WinSetExStyle bRTL
                       ? +WS_EX_LAYOUTRTL
                       : -WS_EX_LAYOUTRTL
                      ,A_ScriptHwnd
         
-        OnMessage AHK_NOTIFYICON
-                 ,ObjBindMethod(this, "AHK_NOTIFYICON")
-                 
-        OnMessage WM_INITMENUPOPUP
-                 ,ObjBindMethod(this, "WM_INITMENUPOPUP")
+        OnMessage AHK_NOTIFYICON, ObjBindMethod(this, "AHK_NOTIFYICON")
+        OnMessage WM_INITMENUPOPUP, ObjBindMethod(this, "WM_INITMENUPOPUP")
         
         this.Loop
         SetTimer ObjBindMethod(this, "Loop"), 500
@@ -642,7 +577,7 @@ LogError(err)
     
     try
     {
-        hEventLog := RegisterEventSource(NONE, APP_NAME)
+        hEventLog := RegisterEventSource(NONE, "HotBin")
         
         ReportEvent hEventLog
                    ,EVENTLOG_ERROR_TYPE
@@ -661,13 +596,20 @@ LogError(err)
 RunAsInteractiveUser()
 {
     if A_IsAdmin
-        WdcRunTaskAsInteractiveUser CMD_LINE, A_ScriptDir
+    {
+        try
+            WdcRunTaskAsInteractiveUser CMD_LINE, A_ScriptDir
+        catch OSError as err
+            LogError(err)
+    }
     
     return !A_IsAdmin
 }
 
 WdcRunTaskAsInteractiveUser(pwszCmdLine, pwszPath)
 {
+    ;// Not documented?
+    
     if HRESULT := DllCall("wdc\WdcRunTaskAsInteractiveUser"
                          ,"WStr", pwszCmdLine
                          ,"WStr", pwszPath
