@@ -58,7 +58,7 @@ CMD_LINE := A_IsCompiled
            ? '"' A_ScriptFullPath '"'
            : '"' A_AhkPath '" "' A_ScriptFullPath '"'
 
-ICON_EXT := "GIF|ICO|ODD|PNG|TIFF"
+ICON_EXT := "GIF|ICO|ODD|PNG|TIF|TIFF"
 ICON_RECYCLER := "empty"
 ICON_RECYCLERFULL := "full"
 
