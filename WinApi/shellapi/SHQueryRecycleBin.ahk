@@ -4,11 +4,12 @@ SHQueryRecycleBin(pszRootPath, pSHQueryRBInfo)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shqueryrecyclebinw
     
-    return DllCall("shell32\SHQueryRecycleBinW"
-                  ,"WStr", pszRootPath
-                  ,"Ptr", pSHQueryRBInfo
-                  ,"HRESULT")
+    if HRESULT := DllCall("shell32\SHQueryRecycleBinW"
+                         ,"WStr", pszRootPath
+                         ,"Ptr", pSHQueryRBInfo
+                         ,"Int")
+        
+        throw OSError(A_LastError, A_ThisFunc, HRESULT)
+        
+    return HRESULT
 }
-
-#Include %A_ScriptDir%
-#Include WinApi\shellapi\SHQUERYRBINFO.ahk

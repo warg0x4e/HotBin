@@ -4,22 +4,21 @@ SHGetKnownFolderPath(rfid, dwFlags, hToken)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath
     
-    try
+    if HRESULT := DllCall("shell32\SHGetKnownFolderPath"
+                         ,"Ptr", rfid
+                         ,"UInt", dwFlags
+                         ,"Ptr", hToken
+                         ,"PtrP", &(ppszPath := 0)
+                         ,"Int")
     {
-        DllCall("shell32\SHGetKnownFolderPath"
-               ,"Ptr", rfid
-               ,"UInt", dwFlags
-               ,"Ptr", hToken
-               ,"PtrP", &(ppszPath := 0)
-               ,"HRESULT")
-        
-        return StrGet(ppszPath, "UTF-16")
-    }
-    catch Any as Err
-        throw Err
-    finally
         CoTaskMemFree(ppszPath)
+        throw OSError(A_LastError, A_ThisFunc, HRESULT)
+    }
+    
+    szPath := StrGet(ppszPath, "UTF-16")
+    CoTaskMemFree(ppszPath)
+    return szPath
 }
 
-#Include %A_ScriptDir%
-#Include WinApi\combaseapi\CoTaskMemFree.ahk
+#Include %A_LineFile%\..\..
+#Include combaseapi\CoTaskMemFree.ahk

@@ -10,5 +10,5 @@ LoadLibrary(lpLibFileName)
         
         return HMODULE
         
-    throw Error(HMODULE, A_ThisFunc)
+    throw OSError(A_LastError, A_ThisFunc, HMODULE)
 }

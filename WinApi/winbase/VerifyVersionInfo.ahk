@@ -12,8 +12,8 @@ VerifyVersionInfo(lpVersionInformation, dwTypeMask, dwlConditionMask)
         
         return BOOL
         
-    if A_LastError = 1150
+    if A_LastError == ERROR_OLD_WIN_VERSION := 1150
         return BOOL
-    
-    throw Error(BOOL, A_ThisFunc)
+        
+    throw OSError(A_LastError, A_ThisFunc, BOOL)
 }

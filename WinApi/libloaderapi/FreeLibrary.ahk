@@ -10,5 +10,5 @@ FreeLibrary(hLibModule)
         
         return BOOL
         
-    throw Error(BOOL, A_ThisFunc)
+    throw OSError(A_LastError, A_ThisFunc, BOOL)
 }

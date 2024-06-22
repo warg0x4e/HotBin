@@ -13,5 +13,5 @@ LoadString(hInstance, uID)
         
         return StrGet(lpBuffer, cchBufferMax, "UTF-16")
     
-    throw Error(cchBufferMax, A_ThisFunc)
+    throw OSError(A_LastError, A_ThisFunc, cchBufferMax)
 }

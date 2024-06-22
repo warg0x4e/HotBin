@@ -4,12 +4,13 @@ SHGetStockIconInfo(siid, uFlags, psii)
 {
     ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetstockiconinfo
     
-    return DllCall("shell32\SHGetStockIconInfo"
-                  ,"UInt", siid
-                  ,"UInt", uFlags
-                  ,"Ptr", psii
-                  ,"HRESULT")
+    if HRESULT := DllCall("shell32\SHGetStockIconInfo"
+                         ,"UInt", siid
+                         ,"UInt", uFlags
+                         ,"Ptr", psii
+                         ,"Int")
+        
+        throw OSError(A_LastError, A_ThisFunc, HRESULT)
+        
+    return HRESULT
 }
-
-#Include %A_ScriptDir%
-#Include WinApi\shellapi\SHSTOCKICONINFO.ahk

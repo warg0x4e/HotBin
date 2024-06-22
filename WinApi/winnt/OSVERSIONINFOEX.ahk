@@ -58,10 +58,16 @@ class OSVERSIONINFOEX extends Buffer
         Set => NumPut("UChar", value, this, 282)
     }
     
+    wReserved
+    {
+        Get => NumGet(this, 283, "UChar")
+        Set => NumPut("UChar", value, this, 283)
+    }
+    
     __New()
     {
-        cbSize := 284
-        super.__New(cbSize, 0)
-        NumPut("UInt", cbSize, this)
+        dwOSVersionInfoSize := 284
+        super.__New(dwOSVersionInfoSize, 0)
+        NumPut("UInt", dwOSVersionInfoSize, this)
     }
 }
