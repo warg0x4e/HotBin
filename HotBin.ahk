@@ -552,11 +552,6 @@ class TrayMenu
     
     static Loop()
     {
-        static hIconRecycler := this.hIconRecycler
-              ,hIconRecyclerFull := this.hIconRecyclerFull
-              ,szItem := NativeLanguage.szItem
-              ,szItems := NativeLanguage.szItems
-        
         shqrbi := RecycleBin.Query()
         
         i64Size := shqrbi.i64Size
@@ -569,15 +564,15 @@ class TrayMenu
         this.i64NumItems := i64NumItems
         
         hIcon := i64NumItems
-                 ? hIconRecyclerFull
-                 : hIconRecycler
+                 ? this.hIconRecyclerFull
+                 : this.hIconRecycler
                  
         TraySetIcon "HICON:*" hIcon
             
         szSize := StrFormatByteSize(i64Size)
         szNumItems := StrReplace(i64NumItems == 1
-                                 ? szItem
-                                 : szItems
+                                 ? NativeLanguage.szItem
+                                 : NativeLanguage.szItems
                                 ,"%s"
                                 ,i64NumItems)
         
