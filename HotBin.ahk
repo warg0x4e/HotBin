@@ -307,7 +307,7 @@ class TrayMenu
         shsii := SHSTOCKICONINFO()
         dwFlags := SHGSI_ICON | SHGSI_SMALLICON
         
-        Loop Parse, LOCALAPPDATA "\HotBin" "|" A_ScriptDir, "|"
+        Loop Parse, LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
         {
             hIcon := NULL
             szIcon := A_LoopField "\" ICON_RECYCLER
