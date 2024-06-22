@@ -94,7 +94,7 @@ Main()
     }
     catch OSError as err
     {
-        LogError(err)
+        LogError err
         
         global LOCALAPPDATA := NULL
     }
@@ -127,7 +127,7 @@ class NativeLanguage
         }
         catch OSError as err
         {
-            LogError(err)
+            LogError err
             
             this.bRTL := false
             this.szClose := "Close"
@@ -145,19 +145,19 @@ class NativeLanguage
             try
                 FreeLibrary hMMRes
             catch OSError as err
-                LogError(err)
+                LogError err
                 
         if IsSet(hMSTask)
             try
                 FreeLibrary hMSTask
             catch OSError as err
-                LogError(err)
+                LogError err
                 
         if IsSet(hShell32)
             try
                 FreeLibrary hShell32
             catch OSError as err
-                LogError(err)
+                LogError err
         
         this.DeleteProp "Load"
     }
@@ -231,7 +231,7 @@ class RunAtUserLogon
         }
         catch OSError as err
         {
-            LogError(err)
+            LogError err
             
             return err.Number
         }
@@ -268,7 +268,7 @@ class RunAtUserLogon
         }
         catch OSError as err
         {
-            LogError(err)
+            LogError err
             
             return err.Number
         }
@@ -309,7 +309,7 @@ class ShowRecycleConfirmation
                     ,"ShowRecycleConfirmation"
         catch OSError as err
         {
-            LogError(err)
+            LogError err
             
             return err.Number
         }
@@ -333,7 +333,7 @@ class ShowRecycleConfirmation
                     ,"ShowRecycleConfirmation"
         catch OSError as err
         {
-            LogError(err)
+            LogError err
             
             return err.Number
         }
@@ -369,7 +369,7 @@ class TrayMenu
         shsii := SHSTOCKICONINFO()
         dwFlags := SHGSI_ICON | SHGSI_SMALLICON
         
-        Loop Parse, LOCALAPPDATA "\HotBin|" A_ScriptDir, "|"
+        Loop Parse, LOCALAPPDATA "\" APP_NAME "|" A_ScriptDir, "|"
         {
             hIcon := NULL
             szIcon := A_LoopField "\" ICON_RECYCLER
@@ -386,7 +386,7 @@ class TrayMenu
                 }
                 catch
                 {
-                    LogError(OSError(ERROR_INVALID_DATA))
+                    LogError OSError(ERROR_INVALID_DATA)
                     
                     try DestroyIcon(hIcon)
                 }
@@ -407,7 +407,7 @@ class TrayMenu
                 }
                 catch
                 {
-                    LogError(OSError(ERROR_INVALID_DATA))
+                    LogError OSError(ERROR_INVALID_DATA)
                     
                     try DestroyIcon(hIcon)
                 }
@@ -474,12 +474,17 @@ class TrayMenu
         A_TrayMenu.Add "2", (*) => NULL
         
         A_TrayMenu.Add ;// Separator.
+        
         A_TrayMenu.Add szRunAtUserLogon, (*) => RunAtUserLogon.Toggle()
         A_TrayMenu.Add szShowRecycleConfirmation, (*) => ShowRecycleConfirmation.Toggle()
+        
         A_TrayMenu.Add ;// Separator.
+        
         A_TrayMenu.Add szOpen, (*) => RecycleBin.Open()
         A_TrayMenu.Add szEmptyRecycleBin, (*) => RecycleBin.Empty()
+        
         A_TrayMenu.Add ;// Separator.
+        
         A_TrayMenu.Add szHelp, (*) => Run(APP_SUPPORT_URL)
         A_TrayMenu.Add szClose, (*) => GetKeyState("Ctrl")
                                        ? Reload()
