@@ -619,7 +619,7 @@ RunAsInteractiveUser()
         try
             WdcRunTaskAsInteractiveUser CMD_LINE, A_ScriptDir
         catch OSError as err
-            LogError(err)
+            LogError err
     }
     
     return !A_IsAdmin
