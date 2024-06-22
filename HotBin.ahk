@@ -335,13 +335,15 @@ class TrayMenu
                     }
                     catch
                     {
-                        LogError OSError(ERROR_INVALID_DATA)
+                        err := OSError(ERROR_INVALID_DATA)
+                        LogError err
+                        SetTimer TrayTip.Bind(szIconRecycler, err.Message, 19), -1000
                         
                         if hIconRecycler
                             try
                                 DestroyIcon(hIconRecycler)
                             catch OSError as err
-                                LogError(err)
+                                LogError err
                     }
                 }
                 
@@ -359,13 +361,15 @@ class TrayMenu
                     }
                     catch
                     {
-                        LogError OSError(ERROR_INVALID_DATA)
+                        err := OSError(ERROR_INVALID_DATA)
+                        LogError err
+                        SetTimer TrayTip.Bind(szIconRecyclerFull, err.Message, 19), -1000
                         
                         if hIconRecyclerFull
                             try
                                 DestroyIcon(hIconRecyclerFull)
                             catch OSError as err
-                                LogError(err)
+                                LogError err
                     }
                 }
             }
