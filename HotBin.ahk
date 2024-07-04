@@ -1,4 +1,4 @@
-﻿;@Ahk2Exe-Let AppVersion = 2.11.0.0
+﻿;@Ahk2Exe-Let AppVersion = 2.11.1.0
 ;@Ahk2Exe-SetCompanyName warg0x4e
 ;@Ahk2Exe-SetCopyright The Unlicense
 ;@Ahk2Exe-SetDescription HotBin
@@ -207,16 +207,7 @@ class RunAtUserLogon
 {
     static Load()
     {
-        szCmdLine := A_IsCompiled
-                     ? '"' A_ScriptFullPath '"'
-                     : '"' A_AhkPath '" "' A_ScriptFullPath '"'
-        
-        szRegKey := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-        
-        try
-            RegWrite szCmdLine, "REG_SZ", szRegKey, APP_NAME
-        catch OSError as err
-            LogError err
+        this.Update
         
         this.DeleteProp "Load"
     }
@@ -229,6 +220,8 @@ class RunAtUserLogon
             RegWrite "030000", "REG_BINARY", szRegKey, APP_NAME
         catch OSError as err
             LogError err
+            
+        this.Update
     }
     
     static IsDisabled()
@@ -244,6 +237,8 @@ class RunAtUserLogon
             RegWrite "020000", "REG_BINARY", szRegKey, APP_NAME
         catch OSError as err
             LogError err
+            
+        this.Update
     }
     
     static IsEnabled()
@@ -259,6 +254,20 @@ class RunAtUserLogon
             this.Disable
         else
             this.Enable
+    }
+    
+    static Update()
+    {
+        szCmdLine := A_IsCompiled
+                     ? '"' A_ScriptFullPath '"'
+                     : '"' A_AhkPath '" "' A_ScriptFullPath '"'
+        
+        szRegKey := "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+        
+        try
+            RegWrite szCmdLine, "REG_SZ", szRegKey, APP_NAME
+        catch OSError as err
+            LogError err
     }
 }
 
@@ -413,6 +422,7 @@ class TrayMenu
         }
         
         Language.Load
+        RunAtUserLogon.Load
         
         A_TrayMenu.Delete
         
