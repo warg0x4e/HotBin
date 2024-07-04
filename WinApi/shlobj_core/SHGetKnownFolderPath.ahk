@@ -1,24 +1,26 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
-SHGetKnownFolderPath(rfid, dwFlags, hToken)
+SHGetKnownFolderPath(szfid, dwFlags, hToken)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath
+    ;// https://bit.ly/4cMvu5D
     
-    if HRESULT := DllCall("shell32\SHGetKnownFolderPath"
-                         ,"Ptr", rfid
-                         ,"UInt", dwFlags
-                         ,"Ptr", hToken
-                         ,"PtrP", &(ppszPath := 0)
-                         ,"Int")
-    {
-        CoTaskMemFree(ppszPath)
-        throw OSError(A_LastError, A_ThisFunc, HRESULT)
-    }
+    DllCall("ole32\CLSIDFromString"
+           ,"WStr", szfid
+           ,"Ptr", rfid := Buffer(16)
+           ,"HRESULT")
     
-    szPath := StrGet(ppszPath, "UTF-16")
-    CoTaskMemFree(ppszPath)
-    return szPath
+    try
+        DllCall("shell32\SHGetKnownFolderPath"
+               ,"Ptr", rfid
+               ,"UInt", dwFlags
+               ,"Ptr", hToken
+               ,"PtrP", &(ppszPath := 0)
+               ,"HRESULT")
+    catch Any as err
+        throw err
+    else
+        return StrGet(ppszPath)
+    finally
+        DllCall("ole32\CoTaskMemFree"
+               ,"Ptr", ppszPath)
 }
-
-#Include %A_LineFile%\..\..
-#Include combaseapi\CoTaskMemFree.ahk

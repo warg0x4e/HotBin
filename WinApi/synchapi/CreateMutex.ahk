@@ -1,16 +1,16 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
-CreateMutex(lpMutexAttributes, bInitialOwner, lpName)
+CreateMutex(lpMutexAttributes, bInitialOwner, szName)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexw
+    ;// https://bit.ly/3zprgm1
     
-    if HANDLE := DllCall("kernel32\CreateMutexW"
+    if hMutex := DllCall("kernel32\CreateMutexW"
                         ,"Ptr", lpMutexAttributes
                         ,"Int", bInitialOwner
-                        ,"WStr", lpName
+                        ,"WStr", szName
                         ,"Ptr")
         
-        return HANDLE
+        return hMutex
         
-    throw OSError(A_LastError, A_ThisFunc, HANDLE)
+    throw OSError(A_LastError)
 }

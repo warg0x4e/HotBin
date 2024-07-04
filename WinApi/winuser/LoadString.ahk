@@ -1,17 +1,17 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
 LoadString(hInstance, uID)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-loadstringw
+    ;// https://bit.ly/4cITmXw
     
-    if cchBufferMax := DllCall("user32\LoadStringW"
-                              ,"Ptr", hInstance
-                              ,"UInt", uID
-                              ,"PtrP", &(lpBuffer := 0)
-                              ,"Int", 0
-                              ,"Int")
+    if cch := DllCall("user32\LoadStringW"
+                     ,"Ptr", hInstance
+                     ,"UInt", uID
+                     ,"PtrP", &(lp := 0)
+                     ,"Int", 0
+                     ,"Int")
         
-        return StrGet(lpBuffer, cchBufferMax, "UTF-16")
+        return StrGet(lp, cch)
     
-    throw OSError(A_LastError, A_ThisFunc, cchBufferMax)
+    throw OSError(A_LastError)
 }

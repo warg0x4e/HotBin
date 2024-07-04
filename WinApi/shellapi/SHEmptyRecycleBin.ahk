@@ -1,16 +1,12 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
-SHEmptyRecycleBin(hWnd, pszRootPath, dwFlags)
+SHEmptyRecycleBin(hWnd, szRootPath, dwFlags)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shemptyrecyclebinw
+    ;// https://bit.ly/4cDLeaM
     
-    if HRESULT := DllCall("shell32\SHEmptyRecycleBinW"
-                         ,"Ptr", hWnd
-                         ,"WStr", pszRootPath
-                         ,"UInt", dwFlags
-                         ,"Int")
-        
-        throw OSError(A_LastError, A_ThisFunc, HRESULT)
-        
-    return HRESULT
+    DllCall("shell32\SHEmptyRecycleBinW"
+           ,"Ptr", hWnd
+           ,"WStr", szRootPath
+           ,"UInt", dwFlags
+           ,"HRESULT")
 }

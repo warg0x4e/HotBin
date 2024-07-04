@@ -1,12 +1,18 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
 StrFormatByteSize(qdw)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/shlwapi/nf-shlwapi-strformatbytesizew
+    ;// https://bit.ly/3W75PxV
     
-    return DllCall("shlwapi\StrFormatByteSizeW"
-                  ,"Int64", qdw
-                  ,"Ptr", Buffer(520, 0)
-                  ,"UInt", 260
-                  ,"WStr")
+    VarSetStrCapacity(&szBuf, 260)
+    
+    if DllCall("shlwapi\StrFormatByteSizeW"
+              ,"Int64", qdw
+              ,"WStr", szBuf
+              ,"UInt", 260
+              ,"Ptr")
+        
+        return szBuf
+        
+    throw OSError(A_LastError)
 }

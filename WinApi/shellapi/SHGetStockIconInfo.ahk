@@ -1,16 +1,12 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
-SHGetStockIconInfo(siid, uFlags, psii)
+SHGetStockIconInfo(siid, uFlags, shsii)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetstockiconinfo
+    ;// https://bit.ly/4eOoczV
     
-    if HRESULT := DllCall("shell32\SHGetStockIconInfo"
-                         ,"UInt", siid
-                         ,"UInt", uFlags
-                         ,"Ptr", psii
-                         ,"Int")
-        
-        throw OSError(A_LastError, A_ThisFunc, HRESULT)
-        
-    return HRESULT
+    DllCall("shell32\SHGetStockIconInfo"
+           ,"UInt", siid
+           ,"UInt", uFlags
+           ,"Ptr", shsii
+           ,"HRESULT")
 }

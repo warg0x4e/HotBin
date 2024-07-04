@@ -1,15 +1,11 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
-SHQueryRecycleBin(pszRootPath, pSHQueryRBInfo)
+SHQueryRecycleBin(szRootPath, shqrbi)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shqueryrecyclebinw
+    ;// https://bit.ly/3W2WGYd
     
-    if HRESULT := DllCall("shell32\SHQueryRecycleBinW"
-                         ,"WStr", pszRootPath
-                         ,"Ptr", pSHQueryRBInfo
-                         ,"Int")
-        
-        throw OSError(A_LastError, A_ThisFunc, HRESULT)
-        
-    return HRESULT
+    DllCall("shell32\SHQueryRecycleBinW"
+           ,"WStr", szRootPath
+           ,"Ptr", shqrbi
+           ,"HRESULT")
 }

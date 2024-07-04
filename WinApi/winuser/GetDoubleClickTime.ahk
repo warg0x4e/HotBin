@@ -1,8 +1,9 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
 GetDoubleClickTime()
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdoubleclicktime
+    ;// https://bit.ly/45P464o
     
-    return DllCall("user32\GetDoubleClickTime", "UInt")
+    return DllCall("user32\GetDoubleClickTime"
+                  ,"UInt")
 }

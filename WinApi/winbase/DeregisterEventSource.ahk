@@ -2,13 +2,11 @@
 
 DeregisterEventSource(hEventLog)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-deregistereventsource
+    ;// https://bit.ly/3L6X41r
     
-    if BOOL := DllCall("advapi32\DeregisterEventSource"
-                      ,"Ptr", hEventLog
-                      ,"Int")
+    if !DllCall("advapi32\DeregisterEventSource"
+               ,"Ptr", hEventLog
+               ,"Int")
         
-        return BOOL
-        
-    throw OSError(A_LastError, A_ThisFunc, BOOL)
+        throw OSError(A_LastError)
 }

@@ -1,15 +1,15 @@
 ﻿#Requires AutoHotkey v2.0+
 
-RegisterEventSource(lpUNCServerName, lpSourceName)
+RegisterEventSource(szUNCServerName, szSourceName)
 {
-    ;// https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-registereventsourcew
+    ;// https://bit.ly/3XL3gnB
     
-    if HANDLE := DllCall("advapi32\RegisterEventSourceW"
-                        ,"WStr", lpUNCServerName
-                        ,"WStr", lpSourceName
-                        ,"Ptr")
+    if hEventLog := DllCall("advapi32\RegisterEventSourceW"
+                           ,"WStr", szUNCServerName
+                           ,"WStr", szSourceName
+                           ,"Ptr")
         
-        return HANDLE
+        return hEventLog
         
-    throw OSError(A_LastError, A_ThisFunc, HANDLE)
+    throw OSError(A_LastError)
 }
