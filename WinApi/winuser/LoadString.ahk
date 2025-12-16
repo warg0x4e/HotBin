@@ -7,7 +7,7 @@
 LoadString(hInstance, dwID)
 {
     pszBuf := NULL
-    cchBuf := DllCall("user32\LoadStringW", "Ptr", hInstance, "UInt", uID, "PtrP", &pszBuf, "Int", 0, "Int")
+    cchBuf := DllCall("user32\LoadStringW", "Ptr", hInstance, "UInt", dwID, "PtrP", &pszBuf, "Int", 0, "Int")
     
     if !cchBuf
         throw OSError(A_LastError, HERE)
