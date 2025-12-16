@@ -5,14 +5,10 @@
 #Include const\NULL.ahk
 #Include combaseapi\CoTaskMemFree.ahk
 #Include guiddef\CLSID.ahk
-#Include winerror\const\E_NOT_SUFFICIENT_BUFFER.ahk
 #Include winerror\FAILED.ahk
 
 StringFromCLSID(clsidInstance)
 {
-    if !(clsidInstance is Buffer) || clsidInstance.SIZE < CLSID.SIZE
-        throw OSError(E_NOT_SUFFICIENT_BUFFER, HERE)
-        
     pszCLSID := NULL
     hr := DllCall("ole32\StringFromCLSID", "Ptr", clsidInstance, "PtrP", &pszCLSID, "Int")
     
