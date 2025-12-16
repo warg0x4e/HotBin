@@ -3,8 +3,8 @@
 #Include ..
 #Include const\HERE.ahk
 
-FreeLibrary(hLibModule)
+DestroyIcon(hIcon)
 {
-    if !DllCall("kernel32\FreeLibrary", "Ptr", hLibModule, "Int")
+    if !DllCall("user32\DestroyIcon", "Ptr", hIcon, "Int")
         throw OSError(A_LastError, HERE)
 }
