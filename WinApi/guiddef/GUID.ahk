@@ -32,12 +32,10 @@ class GUID Extends Buffer
             
             case 1:
             ;// GUID("{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}")
-            value := args[1]
-            
             try
-                CLSIDFromString(value, guidInstance)
+                CLSIDFromString(args[1], guidInstance)
             catch
-                throw OSError(E_INVALIDARG, -1, value)
+                throw OSError(E_INVALIDARG, -1, args[1])
             
             case 11:
             ;// GUID(UInt, UShort, UShort, UChar, UChar, UChar, UChar, UChar, UChar, UChar, UChar)
