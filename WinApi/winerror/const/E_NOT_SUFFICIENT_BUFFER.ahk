@@ -1,2 +1,0 @@
-﻿;// Sign-extended.
-E_NOT_SUFFICIENT_BUFFER := 0xFFFFFFFF8007007A
