@@ -1,4 +1,4 @@
-#Requires AutoHotkey v2.0+
+﻿#Requires AutoHotkey v2.0+
 
 #Include ..
 #Include combaseapi\CLSIDFromString.ahk
@@ -14,7 +14,7 @@ class GUID Extends Buffer
     {
         Set
         {
-            throw E_ACCESSDENIED("Read-only.")
+            throw OSError(E_ACCESSDENIED, -1, "Read-only.")
         }
     }
     
@@ -39,7 +39,7 @@ class GUID Extends Buffer
             try
                 CLSIDFromString(value, guidInstance)
             catch
-                throw E_INVALIDARG(value)
+                throw OSError(E_INVALIDARG, -1, value)
             
             case 11:
             ;// GUID(UInt, UShort, UShort, UChar, UChar, UChar, UChar, UChar, UChar, UChar, UChar)
@@ -48,7 +48,7 @@ class GUID Extends Buffer
                 value := args[A_Index]
                 
                 if !IsInteger(value)
-                    throw E_INVALIDARG(value)
+                    throw OSError(E_INVALIDARG, -1, value)
                     
                 ptr := NumPut(A_Index > 3 ? "UChar" : A_Index > 1 ? "UShort" : "UInt", value, ptr)
             }
@@ -60,13 +60,13 @@ class GUID Extends Buffer
                 value := args[A_Index]
                 
                 if !IsInteger(value)
-                    throw E_INVALIDARG(value)
+                    throw OSError(E_INVALIDARG, -1, value)
                     
                 ptr := NumPut("UChar", value, ptr)
             }
             
             DEFAULT:
-            throw E_INVALIDARG(args.Length)
+            throw OSError(E_INVALIDARG, -1, args.Length)
         }
         
         return guidInstance
