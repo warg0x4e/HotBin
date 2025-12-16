@@ -8,8 +8,6 @@
 
 class GUID Extends Buffer
 {
-    static SIZE => 16
-    
     Size
     {
         Set
@@ -21,9 +19,11 @@ class GUID Extends Buffer
     iVariant => NumGet(this, 4, "UChar" ) >> 4
     iVersion => NumGet(this, 6, "UShort") >> 12
     
+    __New() => super.__New(16)
+    
     static Call(args*)
     {
-        guidInstance := super(16)
+        guidInstance := super()
         ptr := guidInstance.Ptr
         
         switch args.Length
