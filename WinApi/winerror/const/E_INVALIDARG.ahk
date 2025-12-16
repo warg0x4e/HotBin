@@ -1,2 +1,4 @@
-﻿;// Sign-extended.
-E_INVALIDARG := 0xFFFFFFFF80070057
+﻿#Include ..\..
+#Include HRESULT.ahk
+
+E_INVALIDARG := HRESULT(0x80070057)

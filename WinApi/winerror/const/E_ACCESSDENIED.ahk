@@ -1,2 +1,4 @@
-﻿;// Sign-extended.
-E_ACCESSDENIED := 0xFFFFFFFF80070005
+﻿#Include ..\..
+#Include HRESULT.ahk
+
+E_ACCESSDENIED := HRESULT(0x80070005)
