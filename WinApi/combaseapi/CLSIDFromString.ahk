@@ -5,12 +5,12 @@
 #Include guiddef\CLSID.ahk
 #Include winerror\FAILED.ahk
 
-CLSIDFromString(szCLSIDOrProgID, clsidInstance:=CLSID())
+CLSIDFromString(szCLSIDOrProgID, bufCLSID:=CLSID())
 {
-    hr := DllCall("ole32\CLSIDFromString", "WStr", szCLSIDOrProgID, "Ptr", clsidInstance, "Int")
+    hr := DllCall("ole32\CLSIDFromString", "WStr", szCLSIDOrProgID, "Ptr", bufCLSID, "Int")
     
     if FAILED(hr)
         throw OSError(hr, HERE)
         
-    return clsidInstance
+    return bufCLSID
 }

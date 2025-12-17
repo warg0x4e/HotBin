@@ -24,7 +24,7 @@ class SHSTOCKICONINFO Extends Buffer
     __New()
     {
         cbSize := SHSTOCKICONINFO.SIZE
-        super.__New(cbSize, 0)
+        super.__New(cbSize, 0x00)
         NumPut("UInt", cbSize, this, 0)
     }
 }

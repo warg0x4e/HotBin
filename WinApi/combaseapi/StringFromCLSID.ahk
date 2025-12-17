@@ -7,10 +7,10 @@
 #Include guiddef\CLSID.ahk
 #Include winerror\FAILED.ahk
 
-StringFromCLSID(clsidInstance)
+StringFromCLSID(bufCLSID)
 {
     pszCLSID := NULL
-    hr := DllCall("ole32\StringFromCLSID", "Ptr", clsidInstance, "PtrP", &pszCLSID, "Int")
+    hr := DllCall("ole32\StringFromCLSID", "Ptr", bufCLSID, "PtrP", &pszCLSID, "Int")
     
     if FAILED(hr)
     {

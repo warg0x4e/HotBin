@@ -22,7 +22,7 @@ class SHQUERYRBINFO Extends Buffer
     __New()
     {
         cbSize := SHQUERYRBINFO.SIZE
-        super.__New(cbSize, 0)
+        super.__New(cbSize, 0x00)
         NumPut("UInt", cbSize, this, 0)
     }
 }

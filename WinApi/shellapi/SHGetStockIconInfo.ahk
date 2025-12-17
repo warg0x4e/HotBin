@@ -5,12 +5,12 @@
 #Include shellapi\SHSTOCKICONINFO.ahk
 #Include winerror\FAILED.ahk
 
-SHGetStockIconInfo(siid, dwFlags, shsiiInstance:=SHSTOCKICONINFO())
+SHGetStockIconInfo(siid, dwFlags, bufSHSTOCKICONINFO:=SHSTOCKICONINFO())
 {
-    hr := DllCall("shell32\SHGetStockIconInfo", "UInt", siid, "UInt", dwFlags, "Ptr", shsiiInstance, "Int")
+    hr := DllCall("shell32\SHGetStockIconInfo", "UInt", siid, "UInt", dwFlags, "Ptr", bufSHSTOCKICONINFO, "Int")
     
     if FAILED(hr)
         throw OSError(hr, HERE)
         
-    return shsiiInstance
+    return bufSHSTOCKICONINFO
 }

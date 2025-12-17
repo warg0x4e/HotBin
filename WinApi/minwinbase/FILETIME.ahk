@@ -47,5 +47,5 @@ class FILETIME Extends Buffer
         }
     }
     
-    __New() => super.__New(FILETIME.SIZE, 0)
+    __New() => super.__New(8, 0)
 }

@@ -5,6 +5,7 @@
 #Include combaseapi\CLSIDFromString.ahk
 #Include combaseapi\StringFromCLSID.ahk
 #Include winerror\const\E_ACCESSDENIED.ahk
+#Include winerror\const\E_INVALIDARG.ahk
 
 class GUID Extends Buffer
 {
@@ -18,18 +19,19 @@ class GUID Extends Buffer
         }
     }
     
-    iVariant => NumGet(this, 4, "UChar" ) >> 4
-    iVersion => NumGet(this, 6, "UShort") >> 12
-    
-    __New(szGUIDOrProgID?)
+    __New(szCLSIDOrProgID?)
     {
-        super.__New(GUID.SIZE, 0)
-        
-        if IsSet(szGUIDOrProgID)
+        if IsSet(szCLSIDOrProgID)
+        {
+            super.__New(16)
+            
             try
-                CLSIDFromString(szGUIDOrProgID, this)
+                CLSIDFromString(szCLSIDOrProgID, this)
             catch OSError as err
                 throw OSError(err.Number, HERE)
+        }
+        else
+            super.__New(16, 0x00)
     }
     
     ToString() => StringFromCLSID(this)

@@ -5,10 +5,10 @@
 
 StrFormatByteSize(qdw)
 {
-    cch := VarSetStrCapacity(&sz, 32)
+    cchBuf := VarSetStrCapacity(&szBuf, 32)
     
-    if !DllCall("shlwapi\StrFormatByteSizeW", "Int64", qdw, "WStr", sz, "UInt", cch, "Ptr")
+    if !DllCall("shlwapi\StrFormatByteSizeW", "Int64", qdw, "WStr", szBuf, "UInt", cchBuf, "Ptr")
         throw OSError(A_LastError, HERE)
         
-    return sz
+    return szBuf
 }

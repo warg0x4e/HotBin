@@ -5,12 +5,12 @@
 #Include shellapi\SHQUERYRBINFO.ahk
 #Include winerror\FAILED.ahk
 
-SHQueryRecycleBin(szRootPath, shqrbiInstance:=SHQUERYRBINFO())
+SHQueryRecycleBin(szRootPath, bufSHQUERYRBINFO:=SHQUERYRBINFO())
 {
-    hr := DllCall("shell32\SHQueryRecycleBinW", "WStr", szRootPath, "Ptr", shqrbiInstance, "Int")
+    hr := DllCall("shell32\SHQueryRecycleBinW", "WStr", szRootPath, "Ptr", bufSHQUERYRBINFO, "Int")
     
     if FAILED(hr)
         throw OSError(hr, HERE)
         
-    return shqrbiInstance
+    return bufSHQUERYRBINFO
 }

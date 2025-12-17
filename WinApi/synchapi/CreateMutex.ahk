@@ -3,9 +3,9 @@
 #Include ..
 #Include const\HERE.ahk
 
-CreateMutex(saInstance, bInitialOwner, szName)
+CreateMutex(bufSECURITY_ATTRIBUTES, bInitialOwner, szName)
 {
-    hMutex := DllCall("kernel32\CreateMutexW", "Ptr", saInstance, "Int", bInitialOwner, "WStr", szName, "Ptr")
+    hMutex := DllCall("kernel32\CreateMutexW", "Ptr", bufSECURITY_ATTRIBUTES, "Int", bInitialOwner, "WStr", szName, "Ptr")
     
     if !hMutex
         throw OSError(A_LastError, HERE)

@@ -3,9 +3,9 @@
 #Include ..
 #Include minwinbase\FILETIME.ahk
 
-GetSystemTimeAsFileTime(ftInstance:=FILETIME())
+GetSystemTimeAsFileTime(bufFILETIME:=FILETIME())
 {
-    DllCall("kernel32\GetSystemTimeAsFileTime", "Ptr", ftInstance)
+    DllCall("kernel32\GetSystemTimeAsFileTime", "Ptr", bufFILETIME)
     
-    return ftInstance
+    return bufFILETIME
 }
