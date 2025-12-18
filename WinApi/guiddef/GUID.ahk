@@ -5,7 +5,6 @@
 #Include combaseapi\CLSIDFromString.ahk
 #Include combaseapi\StringFromCLSID.ahk
 #Include winerror\const\E_ACCESSDENIED.ahk
-#Include winerror\const\E_INVALIDARG.ahk
 
 class GUID Extends Buffer
 {
