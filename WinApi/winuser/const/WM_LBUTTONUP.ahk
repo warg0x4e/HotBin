@@ -1,0 +1,2 @@
+﻿
+WM_LBUTTONUP := 0x0202
