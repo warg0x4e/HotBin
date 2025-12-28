@@ -1,2 +1,0 @@
-﻿
-ERROR_NOT_SUPPORTED := 50

@@ -1,2 +1,0 @@
-﻿
-WM_MBUTTONUP := 0x0208

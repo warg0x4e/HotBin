@@ -1,2 +1,0 @@
-﻿
-WM_RBUTTONUP := 0x0205

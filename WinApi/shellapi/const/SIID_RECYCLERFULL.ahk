@@ -1,2 +1,0 @@
-﻿
-SIID_RECYCLERFULL := 32
